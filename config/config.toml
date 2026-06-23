@@ -1,0 +1,9 @@
+[ebc.1]
+port = "/dev/ttyUSB0"
+
+[server]
+listen_address = "0.0.0.0"
+port = 3000
+
+[measurements]
+measurement_dir = "measurements"
