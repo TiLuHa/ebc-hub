@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO batteries (\n                battery_id,\n                battery_type_id\n            )\n            VALUES (?, ?)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "d7263c53551ce9d24ff3575eb34b89b415a90983d21b869aa1a321437bafab47"
+}

@@ -1,9 +1,12 @@
 use std::collections::HashMap;
 
-use new_ebc_battery_tester::ebc_manager::EbcManager;
-use new_ebc_battery_tester::{config::Config, ebc_manager_commands::EbcCommand};
+use ebc_hub::db_access::Storage;
+use ebc_hub::db_access::models::BatteryIntake;
+use ebc_hub::ebc_manager::EbcManager;
+use ebc_hub::{config::Config, ebc_manager_commands::EbcCommand};
 
 use color_eyre::eyre::{Result, eyre};
+use sqlx::SqlitePool;
 use tokio::io::{self, AsyncBufReadExt, BufReader};
 
 #[derive(Debug, Clone, Copy)]
@@ -36,6 +39,15 @@ fn print_help() {
     println!("  stop <id>");
     println!("  disconnect <id>");
     println!("  quit");
+    println!("  battery-type list");
+    println!(
+        "  battery-type add <manufacturer> <model> <chemistry> <nominal_voltage_mv> <nominal_capacity_mah>"
+    );
+    println!("  battery add <battery_id> <battery_type_id>");
+    println!("  battery list");
+    println!("  battery show <battery_id>");
+    println!("  battery-intake show <battery_id>");
+    println!("  battery-intake set <battery_id> <voltage_mv> <resistance_uohm>");
     println!();
     println!("Modes:");
     println!("  DSC-CC - Constant Current Discharge");
@@ -50,9 +62,15 @@ fn print_help() {
 async fn main() -> Result<()> {
     color_eyre::install()?;
     tracing_subscriber::fmt::init();
+    dotenvy::dotenv()?;
+
+    let pool = SqlitePool::connect("sqlite:data/ebc-hub.db").await?;
+    sqlx::migrate!("./migrations").run(&pool).await?;
 
     let text = std::fs::read_to_string("config/config.toml")?;
     let config: Config = toml::from_str(&text)?;
+
+    let storage = Storage::connect("sqlite:data/ebc-hub.db").await?;
 
     let ebc_manager = EbcManager::new(config.ebc);
     let ebc_manager_cmd_tx = ebc_manager.cmd_tx();
@@ -268,6 +286,111 @@ async fn main() -> Result<()> {
                     println!("Error when trying to disconnect: {err:?}");
                 }
             }
+
+            ["battery-type", "list"] => {
+                let battery_types = storage.list_battery_types().await?;
+
+                if battery_types.is_empty() {
+                    println!("No battery types found.");
+                } else {
+                    for bt in battery_types {
+                        println!(
+                            "{}: {} {} | {} | {} mV | {} mAh | {} mV | {} mV",
+                            bt.id,
+                            bt.manufacturer,
+                            bt.model,
+                            bt.chemistry,
+                            bt.nominal_voltage_mv,
+                            bt.nominal_capacity_mah,
+                            bt.charge_termination_voltage_mv,
+                            bt.discharge_cutoff_voltage_mv
+                        );
+                    }
+                }
+            }
+
+            [
+                "battery-type",
+                "add",
+                manufacturer,
+                model,
+                chemistry,
+                voltage_mv,
+                capacity_mah,
+                charge_termination_voltage_mv,
+                discharge_cutoff_voltage_mv
+            ] => {
+                let voltage_mv = voltage_mv.parse::<i64>()?;
+                let capacity_mah = capacity_mah.parse::<i64>()?;
+                let charge_termination_voltage_mv= charge_termination_voltage_mv.parse::<i64>()?;
+                let discharge_cutoff_voltage_mv= discharge_cutoff_voltage_mv.parse::<i64>()?;
+
+                let id = storage
+                    .create_battery_type(manufacturer, model, chemistry, voltage_mv, capacity_mah, charge_termination_voltage_mv, discharge_cutoff_voltage_mv)
+                    .await?;
+
+                println!("Created battery type with id {id}.");
+            }
+
+            ["battery", "add", battery_id, battery_type_id] => {
+                let battery_type_id = battery_type_id.parse::<i64>()?;
+
+                storage.create_battery(battery_id, battery_type_id).await?;
+
+                println!("Created battery {battery_id}.");
+            }
+
+            ["battery", "list"] => {
+                let batteries = storage.list_batteries().await?;
+
+                if batteries.is_empty() {
+                    println!("No batteries found.");
+                } else {
+                    for b in batteries {
+                        println!("id={} | type_id={}", b.battery_id, b.battery_type_id);
+                    }
+                }
+            }
+
+            ["battery", "show", battery_id] => match storage.get_battery(battery_id).await? {
+                Some(battery) => println!("{battery:#?}"),
+                None => println!("Battery not found: {battery_id}"),
+            },
+
+            ["battery-intake", "show", battery_id] => {
+    match storage.get_battery_intake(battery_id).await? {
+        Some(intake) => println!("{intake:#?}"),
+        None => println!("No intake data found for battery {battery_id}."),
+    }
+}
+
+["battery-intake", "set", battery_id, voltage_mv, resistance_uohm] => {
+    let voltage_mv = voltage_mv.parse::<i64>()?;
+    let resistance_uohm = resistance_uohm.parse::<i64>()?;
+
+    let mut intake = storage
+        .get_battery_intake(battery_id)
+        .await?
+        .unwrap_or_else(|| BatteryIntake {
+            battery_id: battery_id.to_string(),
+            serial_number: None,
+            purchase_date: None,
+            delivery_date: None,
+            voltage_at_delivery_mv: None,
+            internal_resistance_at_delivery_uohm: None,
+            visual_inspection: None,
+            notes: None,
+        });
+
+    intake.voltage_at_delivery_mv = Some(voltage_mv);
+    intake.internal_resistance_at_delivery_uohm = Some(resistance_uohm);
+
+    storage.upsert_battery_intake(&intake).await?;
+
+    println!(
+        "Updated intake for {battery_id}: {voltage_mv} mV, {resistance_uohm} µΩ."
+    );
+}
 
             [] => {}
 

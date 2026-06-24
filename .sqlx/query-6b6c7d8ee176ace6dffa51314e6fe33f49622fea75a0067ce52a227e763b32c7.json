@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO battery_types (\n                manufacturer,\n                model,\n                chemistry,\n                nominal_voltage_mv,\n                nominal_capacity_mah,\n                charge_termination_voltage_mv,\n                discharge_cutoff_voltage_mv\n            )\n            VALUES (?, ?, ?, ?, ?, ?, ?)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "6b6c7d8ee176ace6dffa51314e6fe33f49622fea75a0067ce52a227e763b32c7"
+}
