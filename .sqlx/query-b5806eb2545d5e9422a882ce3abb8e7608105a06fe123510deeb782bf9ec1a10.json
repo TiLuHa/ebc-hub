@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO battery_intake (\n                battery_id,\n                serial_number,\n                purchase_date,\n                delivery_date,\n                voltage_at_delivery_mv,\n                internal_resistance_at_delivery_uohm,\n                visual_inspection,\n                notes\n            )\n            VALUES (?, ?, ?, ?, ?, ?, ?, ?)\n\n            ON CONFLICT(battery_id)\n            DO UPDATE SET\n                serial_number = excluded.serial_number,\n                purchase_date = excluded.purchase_date,\n                delivery_date = excluded.delivery_date,\n                voltage_at_delivery_mv = excluded.voltage_at_delivery_mv,\n                internal_resistance_at_delivery_uohm = excluded.internal_resistance_at_delivery_uohm,\n                visual_inspection = excluded.visual_inspection,\n                notes = excluded.notes\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "b5806eb2545d5e9422a882ce3abb8e7608105a06fe123510deeb782bf9ec1a10"
+}

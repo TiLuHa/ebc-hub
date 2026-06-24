@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                battery_id as \"battery_id!\",\n                battery_type_id as \"battery_type_id!\",\n                notes\n            FROM batteries\n            WHERE battery_id = ?\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "battery_id!",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "batteries",
+            "name": "battery_id"
+          }
+        }
+      },
+      {
+        "name": "battery_type_id!",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "batteries",
+            "name": "battery_type_id"
+          }
+        }
+      },
+      {
+        "name": "notes",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "batteries",
+            "name": "notes"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "f4131feea4fbf3c1b62fa0c81258afc871a6e579a7862d5f756435fa0f226054"
+}

@@ -1,0 +1,110 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                battery_id as \"battery_id!\",\n                serial_number,\n                purchase_date,\n                delivery_date,\n                voltage_at_delivery_mv,\n                internal_resistance_at_delivery_uohm,\n                visual_inspection,\n                notes\n            FROM battery_intake\n            WHERE battery_id = ?\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "battery_id!",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "battery_intake",
+            "name": "battery_id"
+          }
+        }
+      },
+      {
+        "name": "serial_number",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "battery_intake",
+            "name": "serial_number"
+          }
+        }
+      },
+      {
+        "name": "purchase_date",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "battery_intake",
+            "name": "purchase_date"
+          }
+        }
+      },
+      {
+        "name": "delivery_date",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "battery_intake",
+            "name": "delivery_date"
+          }
+        }
+      },
+      {
+        "name": "voltage_at_delivery_mv",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "battery_intake",
+            "name": "voltage_at_delivery_mv"
+          }
+        }
+      },
+      {
+        "name": "internal_resistance_at_delivery_uohm",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "battery_intake",
+            "name": "internal_resistance_at_delivery_uohm"
+          }
+        }
+      },
+      {
+        "name": "visual_inspection",
+        "ordinal": 6,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "battery_intake",
+            "name": "visual_inspection"
+          }
+        }
+      },
+      {
+        "name": "notes",
+        "ordinal": 7,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "battery_intake",
+            "name": "notes"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "4cef5acd883a42f454e62c26a14eb31a36cdb39fb9468a149741008d2c5f0f0b"
+}
