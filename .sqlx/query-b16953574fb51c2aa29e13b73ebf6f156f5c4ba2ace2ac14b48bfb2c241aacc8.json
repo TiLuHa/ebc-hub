@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT COALESCE(MAX(sample_index) + 1, 0) as \"next_index!\"\n        FROM samples\n        WHERE session_id = ?\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "next_index!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b16953574fb51c2aa29e13b73ebf6f156f5c4ba2ace2ac14b48bfb2c241aacc8"
+}

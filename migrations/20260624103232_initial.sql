@@ -80,26 +80,26 @@ ON tests(battery_id)
 WHERE approved = 1;
 
 CREATE TABLE "test_sessions" (
-	"id"	INTEGER PRIMARY KEY,
-	"test_id"	INTEGER NOT NULL,
-	"started_at"	TEXT NOT NULL,
-	"ended_at"	TEXT,
-	"reason"	TEXT,
-	UNIQUE("test_id", "started_at"),
-	FOREIGN KEY("test_id") REFERENCES "tests"("id")
+    "id" INTEGER PRIMARY KEY,
+    "test_id" INTEGER NOT NULL,
+    "started_at" TEXT NOT NULL,
+    "ended_at" TEXT,
+    "reason" TEXT,
+    UNIQUE("test_id", "started_at"),
+    FOREIGN KEY("test_id") REFERENCES "tests"("id")
 );
 
 CREATE TABLE "samples" (
-	"session_id"	TEXT NOT NULL,
-	"sample_index"	INTEGER NOT NULL,
-	"timestamp"	TEXT NOT NULL,
-	"elapsed_ms"	INTEGER NOT NULL,
-	"voltage_mv"	INTEGER NOT NULL,
-	"current_ma"	INTEGER NOT NULL,
-	"capacity_mah"	INTEGER NOT NULL,
-	"energy_mwh"	INTEGER,
-	PRIMARY KEY("session_id","sample_index"),
-	FOREIGN KEY("session_id") REFERENCES "test_sessions"("id")
+    "session_id" INTEGER NOT NULL,
+    "sample_index" INTEGER NOT NULL,
+    "timestamp" TEXT NOT NULL,
+    "elapsed_ms" INTEGER NOT NULL,
+    "voltage_mv" INTEGER NOT NULL,
+    "current_ma" INTEGER NOT NULL,
+    "capacity_mah" INTEGER NOT NULL,
+    "energy_mwh" INTEGER,
+    PRIMARY KEY("session_id","sample_index"),
+    FOREIGN KEY("session_id") REFERENCES "test_sessions"("id")
 );
 
 INSERT INTO modes (acronym, description) VALUES

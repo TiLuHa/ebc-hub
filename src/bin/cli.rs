@@ -48,11 +48,20 @@ fn print_help() {
     println!("  battery show <battery_id>");
     println!("  battery-intake show <battery_id>");
     println!("  battery-intake set <battery_id> <voltage_mv> <resistance_uohm>");
-    println!("  test create <battery_id> <device_id> <mode> <voltage_before_test_mv> <value1> <value2> <value3>");
+    println!(
+        "  test create <battery_id> <device_id> <mode> <voltage_before_test_mv> <value1> <value2> <value3>"
+    );
     println!("  test list");
     println!("  test show <test_id>");
     println!("  test approve <test_id>");
     println!("  test delete <test_id>");
+    println!("  session create <test_id> [reason]");
+    println!("  session end <session_id>");
+    println!("  session list <test_id>");
+    println!(
+        "  sample append <session_id> <elapsed_ms> <voltage_mv> <current_ma> <capacity_mah> [energy_mwh]"
+    );
+    println!("  sample list <session_id>");
     println!();
     println!("Modes:");
     println!("  DSC-CC - Constant Current Discharge");
@@ -521,6 +530,110 @@ async fn main() -> Result<()> {
                 storage.delete_test(id).await?;
 
                 println!("Deleted test {id}.");
+            }
+
+            ["session", "create", test_id] => {
+                let test_id = test_id.parse::<i64>()?;
+                let session_id = storage.create_test_session(test_id, None).await?;
+                println!("Created session {session_id}.");
+            }
+
+            ["session", "create", test_id, reason] => {
+                let test_id = test_id.parse::<i64>()?;
+                let session_id = storage.create_test_session(test_id, Some(reason)).await?;
+                println!("Created session {session_id}.");
+            }
+
+            ["session", "end", session_id] => {
+                let session_id = session_id.parse::<i64>()?;
+                storage.end_test_session(session_id).await?;
+                println!("Ended session {session_id}.");
+            }
+
+            ["session", "list", test_id] => {
+                let test_id = test_id.parse::<i64>()?;
+                let sessions = storage.list_test_sessions(test_id).await?;
+
+                if sessions.is_empty() {
+                    println!("No sessions found for test {test_id}.");
+                } else {
+                    for s in sessions {
+                        println!("{s:#?}");
+                    }
+                }
+            }
+
+            [
+                "sample",
+                "append",
+                session_id,
+                elapsed_ms,
+                voltage_mv,
+                current_ma,
+                capacity_mah,
+            ] => {
+                let session_id = session_id.parse::<i64>()?;
+                let elapsed_ms = elapsed_ms.parse::<i64>()?;
+                let voltage_mv = voltage_mv.parse::<i64>()?;
+                let current_ma = current_ma.parse::<i64>()?;
+                let capacity_mah = capacity_mah.parse::<i64>()?;
+
+                let sample_index = storage
+                    .append_sample_auto_index(
+                        session_id,
+                        elapsed_ms,
+                        voltage_mv,
+                        current_ma,
+                        capacity_mah,
+                        None,
+                    )
+                    .await?;
+
+                println!("Appended sample {sample_index} to session {session_id}.");
+            }
+
+            [
+                "sample",
+                "append",
+                session_id,
+                elapsed_ms,
+                voltage_mv,
+                current_ma,
+                capacity_mah,
+                energy_mwh,
+            ] => {
+                let session_id = session_id.parse::<i64>()?;
+                let elapsed_ms = elapsed_ms.parse::<i64>()?;
+                let voltage_mv = voltage_mv.parse::<i64>()?;
+                let current_ma = current_ma.parse::<i64>()?;
+                let capacity_mah = capacity_mah.parse::<i64>()?;
+                let energy_mwh = energy_mwh.parse::<i64>()?;
+
+                let sample_index = storage
+                    .append_sample_auto_index(
+                        session_id,
+                        elapsed_ms,
+                        voltage_mv,
+                        current_ma,
+                        capacity_mah,
+                        Some(energy_mwh),
+                    )
+                    .await?;
+
+                println!("Appended sample {sample_index} to session {session_id}.");
+            }
+
+            ["sample", "list", session_id] => {
+                let session_id = session_id.parse::<i64>()?;
+                let samples = storage.list_samples_for_session(session_id).await?;
+
+                if samples.is_empty() {
+                    println!("No samples found for session {session_id}.");
+                } else {
+                    for sample in samples {
+                        println!("{sample:#?}");
+                    }
+                }
             }
 
             [] => {}

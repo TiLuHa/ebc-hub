@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            id as \"id!\",\n            test_id as \"test_id!\",\n            started_at as \"started_at!\",\n            ended_at,\n            reason\n        FROM test_sessions\n        WHERE test_id = ?\n        ORDER BY started_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "test_sessions",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "test_id!",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "test_sessions",
+            "name": "test_id"
+          }
+        }
+      },
+      {
+        "name": "started_at!",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "test_sessions",
+            "name": "started_at"
+          }
+        }
+      },
+      {
+        "name": "ended_at",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "test_sessions",
+            "name": "ended_at"
+          }
+        }
+      },
+      {
+        "name": "reason",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "test_sessions",
+            "name": "reason"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "e4016b9a09f79b29a84091a353fa994f344088772d18e6e4884ec4c7983ae213"
+}

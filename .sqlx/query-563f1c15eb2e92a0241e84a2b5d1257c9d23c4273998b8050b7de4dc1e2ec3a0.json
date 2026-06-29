@@ -1,0 +1,110 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            session_id as \"session_id!\",\n            sample_index as \"sample_index!\",\n            timestamp as \"timestamp!\",\n            elapsed_ms as \"elapsed_ms!\",\n            voltage_mv as \"voltage_mv!\",\n            current_ma as \"current_ma!\",\n            capacity_mah as \"capacity_mah!\",\n            energy_mwh\n        FROM samples\n        WHERE session_id = ?\n        ORDER BY sample_index\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "session_id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "samples",
+            "name": "session_id"
+          }
+        }
+      },
+      {
+        "name": "sample_index!",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "samples",
+            "name": "sample_index"
+          }
+        }
+      },
+      {
+        "name": "timestamp!",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "samples",
+            "name": "timestamp"
+          }
+        }
+      },
+      {
+        "name": "elapsed_ms!",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "samples",
+            "name": "elapsed_ms"
+          }
+        }
+      },
+      {
+        "name": "voltage_mv!",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "samples",
+            "name": "voltage_mv"
+          }
+        }
+      },
+      {
+        "name": "current_ma!",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "samples",
+            "name": "current_ma"
+          }
+        }
+      },
+      {
+        "name": "capacity_mah!",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "samples",
+            "name": "capacity_mah"
+          }
+        }
+      },
+      {
+        "name": "energy_mwh",
+        "ordinal": 7,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "samples",
+            "name": "energy_mwh"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "563f1c15eb2e92a0241e84a2b5d1257c9d23c4273998b8050b7de4dc1e2ec3a0"
+}

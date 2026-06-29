@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
 pub struct Sample {
-    pub session_id: String,
+    pub session_id: i64,
     pub sample_index: i64,
 
     pub timestamp: String,

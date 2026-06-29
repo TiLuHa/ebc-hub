@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO samples (\n            session_id,\n            sample_index,\n            timestamp,\n            elapsed_ms,\n            voltage_mv,\n            current_ma,\n            capacity_mah,\n            energy_mwh\n        )\n        VALUES (?, ?, ?, ?, ?, ?, ?, ?)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "485c08d514dfa844ee5072bcbb35a4d5ea2f7248b2ae3b2d524e8071be55159d"
+}

@@ -1,7 +1,7 @@
 use color_eyre::eyre::Result;
 use sqlx::{SqlitePool, sqlite::SqlitePoolOptions};
 
-use crate::db_access::models::{Battery, BatteryIntake, BatteryType, Test};
+use crate::db_access::models::{Battery, BatteryIntake, BatteryType, Sample, Test, TestSession};
 
 #[derive(Clone)]
 pub struct Storage {
@@ -362,5 +362,185 @@ impl Storage {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn create_test_session(&self, test_id: i64, reason: Option<&str>) -> Result<i64> {
+        let started_at = chrono::Utc::now().to_rfc3339();
+
+        let result = sqlx::query!(
+            r#"
+        INSERT INTO test_sessions (
+            test_id,
+            started_at,
+            reason
+        )
+        VALUES (?, ?, ?)
+        "#,
+            test_id,
+            started_at,
+            reason,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.last_insert_rowid())
+    }
+
+    pub async fn end_test_session(&self, session_id: i64) -> Result<()> {
+        let ended_at = chrono::Utc::now().to_rfc3339();
+
+        sqlx::query!(
+            r#"
+        UPDATE test_sessions
+        SET ended_at = ?
+        WHERE id = ?
+        "#,
+            ended_at,
+            session_id,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn get_test_session(&self, session_id: i64) -> Result<Option<TestSession>> {
+        let session = sqlx::query_as!(
+            TestSession,
+            r#"
+        SELECT
+            id as "id!",
+            test_id as "test_id!",
+            started_at as "started_at!",
+            ended_at,
+            reason
+        FROM test_sessions
+        WHERE id = ?
+        "#,
+            session_id,
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(session)
+    }
+
+    pub async fn list_test_sessions(&self, test_id: i64) -> Result<Vec<TestSession>> {
+        let sessions = sqlx::query_as!(
+            TestSession,
+            r#"
+        SELECT
+            id as "id!",
+            test_id as "test_id!",
+            started_at as "started_at!",
+            ended_at,
+            reason
+        FROM test_sessions
+        WHERE test_id = ?
+        ORDER BY started_at
+        "#,
+            test_id,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(sessions)
+    }
+
+    pub async fn next_sample_index(&self, session_id: i64) -> Result<i64> {
+        let row = sqlx::query!(
+            r#"
+        SELECT COALESCE(MAX(sample_index) + 1, 0) as "next_index!"
+        FROM samples
+        WHERE session_id = ?
+        "#,
+            session_id,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(row.next_index)
+    }
+
+    pub async fn append_sample(&self, sample: &Sample) -> Result<()> {
+        sqlx::query!(
+            r#"
+        INSERT INTO samples (
+            session_id,
+            sample_index,
+            timestamp,
+            elapsed_ms,
+            voltage_mv,
+            current_ma,
+            capacity_mah,
+            energy_mwh
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        "#,
+            sample.session_id,
+            sample.sample_index,
+            sample.timestamp,
+            sample.elapsed_ms,
+            sample.voltage_mv,
+            sample.current_ma,
+            sample.capacity_mah,
+            sample.energy_mwh,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn append_sample_auto_index(
+        &self,
+        session_id: i64,
+        elapsed_ms: i64,
+        voltage_mv: i64,
+        current_ma: i64,
+        capacity_mah: i64,
+        energy_mwh: Option<i64>,
+    ) -> Result<i64> {
+        let sample_index = self.next_sample_index(session_id).await?;
+
+        let sample = Sample {
+            session_id,
+            sample_index,
+            timestamp: chrono::Utc::now().to_rfc3339(),
+            elapsed_ms,
+            voltage_mv,
+            current_ma,
+            capacity_mah,
+            energy_mwh,
+        };
+
+        self.append_sample(&sample).await?;
+
+        Ok(sample_index)
+    }
+
+    pub async fn list_samples_for_session(&self, session_id: i64) -> Result<Vec<Sample>> {
+        let samples = sqlx::query_as!(
+            Sample,
+            r#"
+        SELECT
+            session_id as "session_id!",
+            sample_index as "sample_index!",
+            timestamp as "timestamp!",
+            elapsed_ms as "elapsed_ms!",
+            voltage_mv as "voltage_mv!",
+            current_ma as "current_ma!",
+            capacity_mah as "capacity_mah!",
+            energy_mwh
+        FROM samples
+        WHERE session_id = ?
+        ORDER BY sample_index
+        "#,
+            session_id,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(samples)
     }
 }
