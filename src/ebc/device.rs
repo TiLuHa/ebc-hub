@@ -9,12 +9,12 @@ use std::io::{Read, Write};
 use std::time::Duration;
 use std::time::Instant;
 
-pub struct EbcDevice {
+pub struct Device {
     port: Box<dyn SerialPort>,
     buffer: Vec<u8>,
 }
 
-impl EbcDevice {
+impl Device {
     pub fn new(path: &str) -> Result<Self> {
         let port = serialport::new(path, 9600)
             .data_bits(serialport::DataBits::Eight)
@@ -88,5 +88,11 @@ impl EbcDevice {
                 }
             }
         }
+    }
+}
+
+impl Drop for Device {
+    fn drop(&mut self) {
+        self.send(OutboundFrame::disconnect()).ok();
     }
 }

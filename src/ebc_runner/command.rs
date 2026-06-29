@@ -1,87 +1,67 @@
 use color_eyre::Result;
 use tokio::sync::{broadcast, mpsc, oneshot};
 
-use crate::ebc_manager::{DeviceInfo, EbcEvent};
+use crate::ebc_runner::Event;
 
-pub enum EbcCommand {
-    Connect {
-        id: String,
-        callback: oneshot::Sender<Result<DeviceInfo>>,
-    },
-    Disconnect {
-        id: String,
-        callback: oneshot::Sender<Result<()>>,
-    },
+pub enum Command {
     Status {
-        id: String,
-        callback: oneshot::Sender<Result<EbcEvent>>,
+        callback: oneshot::Sender<Event>,
     },
     SubReports {
-        id: String,
-        callback: oneshot::Sender<Result<broadcast::Receiver<EbcEvent>>>,
+        callback: oneshot::Sender<broadcast::Receiver<Event>>,
     },
     Stop {
-        id: String,
         callback: oneshot::Sender<Result<()>>,
     },
     StartConstantCurrentDischarge {
-        id: String,
         discharge_current_ma: u16,
         cutoff_voltage_mv: u16,
         cutoff_time_min: u16,
         callback: oneshot::Sender<Result<()>>,
     },
     AdjustConstantCurrentDischarge {
-        id: String,
         discharge_current_ma: u16,
         cutoff_voltage_mv: u16,
         cutoff_time_min: u16,
         callback: oneshot::Sender<Result<()>>,
     },
     ContinueConstantCurrentDischarge {
-        id: String,
         discharge_current_ma: u16,
         cutoff_voltage_mv: u16,
         cutoff_time_min: u16,
         callback: oneshot::Sender<Result<()>>,
     },
     StartConstantPowerDischarge {
-        id: String,
         discharge_power_w: u16,
         cutoff_voltage_mv: u16,
         cutoff_time_min: u16,
         callback: oneshot::Sender<Result<()>>,
     },
     AdjustConstantPowerDischarge {
-        id: String,
         discharge_power_w: u16,
         cutoff_voltage_mv: u16,
         cutoff_time_min: u16,
         callback: oneshot::Sender<Result<()>>,
     },
     ContinueConstantPowerDischarge {
-        id: String,
         discharge_power_w: u16,
         cutoff_voltage_mv: u16,
         cutoff_time_min: u16,
         callback: oneshot::Sender<Result<()>>,
     },
     StartConstantCurrentVoltageCharge {
-        id: String,
         charge_current_ma: u16,
         charge_voltage_mv: u16,
         cutoff_current_ma: u16,
         callback: oneshot::Sender<Result<()>>,
     },
     AdjustConstantCurrentVoltageCharge {
-        id: String,
         charge_current_ma: u16,
         charge_voltage_mv: u16,
         cutoff_current_ma: u16,
         callback: oneshot::Sender<Result<()>>,
     },
     ContinueConstantCurrentVoltageCharge {
-        id: String,
         charge_current_ma: u16,
         charge_voltage_mv: u16,
         cutoff_current_ma: u16,
@@ -89,58 +69,36 @@ pub enum EbcCommand {
     },
 }
 
-impl EbcCommand {
-    pub async fn connect(
-        cmd_tx: mpsc::UnboundedSender<EbcCommand>,
-        id: String,
-    ) -> Result<DeviceInfo> {
+impl Command {
+    pub async fn status(cmd_tx: mpsc::UnboundedSender<Command>) -> Result<Event> {
         let (tx, rx) = oneshot::channel();
-        cmd_tx.send(EbcCommand::Connect { id, callback: tx }).ok();
-        rx.await?
-    }
-
-    pub async fn disconnect(cmd_tx: mpsc::UnboundedSender<EbcCommand>, id: String) -> Result<()> {
-        let (tx, rx) = oneshot::channel();
-        cmd_tx
-            .send(EbcCommand::Disconnect { id, callback: tx })
-            .ok();
-        rx.await?
-    }
-
-    pub async fn status(cmd_tx: mpsc::UnboundedSender<EbcCommand>, id: String) -> Result<EbcEvent> {
-        let (tx, rx) = oneshot::channel();
-        cmd_tx.send(EbcCommand::Status { id, callback: tx }).ok();
-        rx.await?
+        cmd_tx.send(Command::Status { callback: tx }).ok();
+        Ok(rx.await?)
     }
 
     pub async fn sub_reports(
-        cmd_tx: mpsc::UnboundedSender<EbcCommand>,
-        id: String,
-    ) -> Result<broadcast::Receiver<EbcEvent>> {
+        cmd_tx: mpsc::UnboundedSender<Command>,
+    ) -> Result<broadcast::Receiver<Event>> {
         let (tx, rx) = oneshot::channel();
-        cmd_tx
-            .send(EbcCommand::SubReports { id, callback: tx })
-            .ok();
-        rx.await?
+        cmd_tx.send(Command::SubReports { callback: tx }).ok();
+        Ok(rx.await?)
     }
 
-    pub async fn stop(cmd_tx: mpsc::UnboundedSender<EbcCommand>, id: String) -> Result<()> {
+    pub async fn stop(cmd_tx: mpsc::UnboundedSender<Command>) -> Result<()> {
         let (tx, rx) = oneshot::channel();
-        cmd_tx.send(EbcCommand::Stop { id, callback: tx }).ok();
+        cmd_tx.send(Command::Stop { callback: tx }).ok();
         rx.await?
     }
 
     pub async fn start_constant_current_discharge_command(
-        cmd_tx: mpsc::UnboundedSender<EbcCommand>,
-        id: String,
+        cmd_tx: mpsc::UnboundedSender<Command>,
         discharge_current_ma: u16,
         cutoff_voltage_mv: u16,
         cutoff_time_min: u16,
     ) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         cmd_tx
-            .send(EbcCommand::StartConstantCurrentDischarge {
-                id,
+            .send(Command::StartConstantCurrentDischarge {
                 discharge_current_ma,
                 cutoff_voltage_mv,
                 cutoff_time_min,
@@ -151,16 +109,14 @@ impl EbcCommand {
     }
 
     pub async fn adjust_constant_current_discharge_command(
-        cmd_tx: mpsc::UnboundedSender<EbcCommand>,
-        id: String,
+        cmd_tx: mpsc::UnboundedSender<Command>,
         discharge_current_ma: u16,
         cutoff_voltage_mv: u16,
         cutoff_time_min: u16,
     ) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         cmd_tx
-            .send(EbcCommand::AdjustConstantCurrentDischarge {
-                id,
+            .send(Command::AdjustConstantCurrentDischarge {
                 discharge_current_ma,
                 cutoff_voltage_mv,
                 cutoff_time_min,
@@ -171,16 +127,14 @@ impl EbcCommand {
     }
 
     pub async fn continue_constant_current_discharge_command(
-        cmd_tx: mpsc::UnboundedSender<EbcCommand>,
-        id: String,
+        cmd_tx: mpsc::UnboundedSender<Command>,
         discharge_current_ma: u16,
         cutoff_voltage_mv: u16,
         cutoff_time_min: u16,
     ) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         cmd_tx
-            .send(EbcCommand::ContinueConstantCurrentDischarge {
-                id,
+            .send(Command::ContinueConstantCurrentDischarge {
                 discharge_current_ma,
                 cutoff_voltage_mv,
                 cutoff_time_min,
@@ -191,16 +145,14 @@ impl EbcCommand {
     }
 
     pub async fn start_constant_power_discharge_command(
-        cmd_tx: mpsc::UnboundedSender<EbcCommand>,
-        id: String,
+        cmd_tx: mpsc::UnboundedSender<Command>,
         discharge_power_w: u16,
         cutoff_voltage_mv: u16,
         cutoff_time_min: u16,
     ) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         cmd_tx
-            .send(EbcCommand::StartConstantPowerDischarge {
-                id,
+            .send(Command::StartConstantPowerDischarge {
                 discharge_power_w,
                 cutoff_voltage_mv,
                 cutoff_time_min,
@@ -211,16 +163,14 @@ impl EbcCommand {
     }
 
     pub async fn adjust_constant_power_discharge_command(
-        cmd_tx: mpsc::UnboundedSender<EbcCommand>,
-        id: String,
+        cmd_tx: mpsc::UnboundedSender<Command>,
         discharge_power_w: u16,
         cutoff_voltage_mv: u16,
         cutoff_time_min: u16,
     ) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         cmd_tx
-            .send(EbcCommand::AdjustConstantPowerDischarge {
-                id,
+            .send(Command::AdjustConstantPowerDischarge {
                 discharge_power_w,
                 cutoff_voltage_mv,
                 cutoff_time_min,
@@ -231,16 +181,14 @@ impl EbcCommand {
     }
 
     pub async fn continue_constant_power_discharge_command(
-        cmd_tx: mpsc::UnboundedSender<EbcCommand>,
-        id: String,
+        cmd_tx: mpsc::UnboundedSender<Command>,
         discharge_power_w: u16,
         cutoff_voltage_mv: u16,
         cutoff_time_min: u16,
     ) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         cmd_tx
-            .send(EbcCommand::ContinueConstantPowerDischarge {
-                id,
+            .send(Command::ContinueConstantPowerDischarge {
                 discharge_power_w,
                 cutoff_voltage_mv,
                 cutoff_time_min,
@@ -251,16 +199,14 @@ impl EbcCommand {
     }
 
     pub async fn start_constant_current_voltage_charge_command(
-        cmd_tx: mpsc::UnboundedSender<EbcCommand>,
-        id: String,
+        cmd_tx: mpsc::UnboundedSender<Command>,
         charge_current_ma: u16,
         charge_voltage_mv: u16,
         cutoff_current_ma: u16,
     ) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         cmd_tx
-            .send(EbcCommand::StartConstantCurrentVoltageCharge {
-                id,
+            .send(Command::StartConstantCurrentVoltageCharge {
                 charge_current_ma,
                 charge_voltage_mv,
                 cutoff_current_ma,
@@ -271,16 +217,14 @@ impl EbcCommand {
     }
 
     pub async fn adjust_constant_current_voltage_charge_command(
-        cmd_tx: mpsc::UnboundedSender<EbcCommand>,
-        id: String,
+        cmd_tx: mpsc::UnboundedSender<Command>,
         charge_current_ma: u16,
         charge_voltage_mv: u16,
         cutoff_current_ma: u16,
     ) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         cmd_tx
-            .send(EbcCommand::AdjustConstantCurrentVoltageCharge {
-                id,
+            .send(Command::AdjustConstantCurrentVoltageCharge {
                 charge_current_ma,
                 charge_voltage_mv,
                 cutoff_current_ma,
@@ -291,16 +235,14 @@ impl EbcCommand {
     }
 
     pub async fn continue_constant_current_voltage_charge_command(
-        cmd_tx: mpsc::UnboundedSender<EbcCommand>,
-        id: String,
+        cmd_tx: mpsc::UnboundedSender<Command>,
         charge_current_ma: u16,
         charge_voltage_mv: u16,
         cutoff_current_ma: u16,
     ) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         cmd_tx
-            .send(EbcCommand::ContinueConstantCurrentVoltageCharge {
-                id,
+            .send(Command::ContinueConstantCurrentVoltageCharge {
                 charge_current_ma,
                 charge_voltage_mv,
                 cutoff_current_ma,

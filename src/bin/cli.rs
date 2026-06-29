@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
+use ebc_hub::config::Config;
 use ebc_hub::db_access::Storage;
 use ebc_hub::db_access::models::{BatteryIntake, Test};
-use ebc_hub::ebc_manager::EbcManager;
-use ebc_hub::{config::Config, ebc_manager_commands::EbcCommand};
+use ebc_hub::ebc;
+use ebc_hub::ebc::frame::OutboundFrame;
+use ebc_hub::ebc_runner::{self, EbcRunner};
 
 use color_eyre::eyre::{Result, eyre};
 use sqlx::SqlitePool;
@@ -86,15 +88,10 @@ async fn main() -> Result<()> {
 
     let storage = Storage::connect("sqlite:data/ebc-hub.db").await?;
 
-    let ebc_manager = EbcManager::new(config.ebc);
-    let ebc_manager_cmd_tx = ebc_manager.cmd_tx();
-
-    let _ebc_manager_thread = tokio::task::spawn(ebc_manager.run());
+    let mut ebc_runners = HashMap::new();
 
     let stdin = BufReader::new(io::stdin());
     let mut lines = stdin.lines();
-
-    let mut ebcs = HashMap::new();
 
     println!("EBC CLI ready.");
     print_help();
@@ -115,20 +112,57 @@ async fn main() -> Result<()> {
 
                 println!("connect {id}");
 
-                match EbcCommand::connect(ebc_manager_cmd_tx.clone(), id.clone()).await {
-                    Ok(dev_info) => {
-                        ebcs.insert(id, dev_info);
+                let config = match config.ebc.get(&id) {
+                    Some(config) => config,
+                    None => {
+                        println!("The given id is not present.");
+                        continue;
                     }
-                    Err(err) => {
-                        println!("Error when trying to connect: {err:?}");
-                    }
+                };
+
+                let result = (|| -> Result<()> {
+                    let mut ebc = ebc::Device::new(&config.port)?;
+                    ebc.send(OutboundFrame::connect())?;
+                    let ebc_runner = EbcRunner::new(ebc)?;
+                    let ebc_runner_cmd_tx = ebc_runner.cmd_tx();
+
+                    let ebc_runner_thread: tokio::task::JoinHandle<()> =
+                        tokio::task::spawn(ebc_runner.run());
+                    ebc_runners.insert(id, (ebc_runner_cmd_tx, ebc_runner_thread));
+                    Ok(())
+                })();
+                if let Err(rep) = result {
+                    println!("Error connecting to the device: {:?}", rep);
                 }
+            }
+
+            ["disconnect", id] => {
+                let id = id.parse::<usize>()?.to_string();
+
+                println!("disconnect {id}");
+
+                let (_, handle) = match ebc_runners.remove(&id) {
+                    Some(config) => config,
+                    None => {
+                        println!("The given id is not present.");
+                        continue;
+                    }
+                };
+                handle.abort();
             }
 
             ["status", id] => {
                 let id = id.parse::<usize>()?.to_string();
 
-                match EbcCommand::status(ebc_manager_cmd_tx.clone(), id).await {
+                let (cmd_tx, _) = match ebc_runners.get(&id) {
+                    Some(config) => config,
+                    None => {
+                        println!("The given id is not present.");
+                        continue;
+                    }
+                };
+
+                match ebc_runner::Command::status(cmd_tx.clone()).await {
                     Ok(report) => println!("{report:#?}"),
                     Err(err) => println!("Error when trying to get status: {err:?}"),
                 }
@@ -145,11 +179,18 @@ async fn main() -> Result<()> {
                     "start id={id}, mode={mode:?}, value1={value1}, value2={value2}, value3={value3}"
                 );
 
+                let (cmd_tx, _) = match ebc_runners.get(&id) {
+                    Some(config) => config,
+                    None => {
+                        println!("The given id is not present.");
+                        continue;
+                    }
+                };
+
                 let result = match mode {
                     CliMode::DscCc => {
-                        EbcCommand::start_constant_current_discharge_command(
-                            ebc_manager_cmd_tx.clone(),
-                            id,
+                        ebc_runner::Command::start_constant_current_discharge_command(
+                            cmd_tx.clone(),
                             value1,
                             value2,
                             value3,
@@ -157,9 +198,8 @@ async fn main() -> Result<()> {
                         .await
                     }
                     CliMode::DscCp => {
-                        EbcCommand::start_constant_power_discharge_command(
-                            ebc_manager_cmd_tx.clone(),
-                            id,
+                        ebc_runner::Command::start_constant_power_discharge_command(
+                            cmd_tx.clone(),
                             value1,
                             value2,
                             value3,
@@ -167,9 +207,8 @@ async fn main() -> Result<()> {
                         .await
                     }
                     CliMode::ChgCv => {
-                        EbcCommand::start_constant_current_voltage_charge_command(
-                            ebc_manager_cmd_tx.clone(),
-                            id,
+                        ebc_runner::Command::start_constant_current_voltage_charge_command(
+                            cmd_tx.clone(),
                             value1,
                             value2,
                             value3,
@@ -194,11 +233,18 @@ async fn main() -> Result<()> {
                     "adjust id={id}, mode={mode:?}, value1={value1}, value2={value2}, value3={value3}"
                 );
 
+                let (cmd_tx, _) = match ebc_runners.get(&id) {
+                    Some(config) => config,
+                    None => {
+                        println!("The given id is not present.");
+                        continue;
+                    }
+                };
+
                 let result = match mode {
                     CliMode::DscCc => {
-                        EbcCommand::adjust_constant_current_discharge_command(
-                            ebc_manager_cmd_tx.clone(),
-                            id,
+                        ebc_runner::Command::adjust_constant_current_discharge_command(
+                            cmd_tx.clone(),
                             value1,
                             value2,
                             value3,
@@ -206,9 +252,8 @@ async fn main() -> Result<()> {
                         .await
                     }
                     CliMode::DscCp => {
-                        EbcCommand::adjust_constant_power_discharge_command(
-                            ebc_manager_cmd_tx.clone(),
-                            id,
+                        ebc_runner::Command::adjust_constant_power_discharge_command(
+                            cmd_tx.clone(),
                             value1,
                             value2,
                             value3,
@@ -216,9 +261,8 @@ async fn main() -> Result<()> {
                         .await
                     }
                     CliMode::ChgCv => {
-                        EbcCommand::adjust_constant_current_voltage_charge_command(
-                            ebc_manager_cmd_tx.clone(),
-                            id,
+                        ebc_runner::Command::adjust_constant_current_voltage_charge_command(
+                            cmd_tx.clone(),
                             value1,
                             value2,
                             value3,
@@ -243,11 +287,17 @@ async fn main() -> Result<()> {
                     "continue id={id}, mode={mode:?}, value1={value1}, value2={value2}, value3={value3}"
                 );
 
+                let (cmd_tx, _) = match ebc_runners.get(&id) {
+                    Some(config) => config,
+                    None => {
+                        println!("The given id is not present.");
+                        continue;
+                    }
+                };
                 let result = match mode {
                     CliMode::DscCc => {
-                        EbcCommand::continue_constant_current_discharge_command(
-                            ebc_manager_cmd_tx.clone(),
-                            id,
+                        ebc_runner::Command::continue_constant_current_discharge_command(
+                            cmd_tx.clone(),
                             value1,
                             value2,
                             value3,
@@ -255,9 +305,8 @@ async fn main() -> Result<()> {
                         .await
                     }
                     CliMode::DscCp => {
-                        EbcCommand::continue_constant_power_discharge_command(
-                            ebc_manager_cmd_tx.clone(),
-                            id,
+                        ebc_runner::Command::continue_constant_power_discharge_command(
+                            cmd_tx.clone(),
                             value1,
                             value2,
                             value3,
@@ -265,9 +314,8 @@ async fn main() -> Result<()> {
                         .await
                     }
                     CliMode::ChgCv => {
-                        EbcCommand::continue_constant_current_voltage_charge_command(
-                            ebc_manager_cmd_tx.clone(),
-                            id,
+                        ebc_runner::Command::continue_constant_current_voltage_charge_command(
+                            cmd_tx.clone(),
                             value1,
                             value2,
                             value3,
@@ -286,18 +334,16 @@ async fn main() -> Result<()> {
 
                 println!("stop {id}");
 
-                if let Err(err) = EbcCommand::stop(ebc_manager_cmd_tx.clone(), id).await {
+                let (cmd_tx, _) = match ebc_runners.get(&id) {
+                    Some(config) => config,
+                    None => {
+                        println!("The given id is not present.");
+                        continue;
+                    }
+                };
+
+                if let Err(err) = ebc_runner::Command::stop(cmd_tx.clone()).await {
                     println!("Error when trying to stop: {err:?}");
-                }
-            }
-
-            ["disconnect", id] => {
-                let id = id.parse::<usize>()?.to_string();
-
-                println!("disconnect {id}");
-
-                if let Err(err) = EbcCommand::disconnect(ebc_manager_cmd_tx.clone(), id).await {
-                    println!("Error when trying to disconnect: {err:?}");
                 }
             }
 

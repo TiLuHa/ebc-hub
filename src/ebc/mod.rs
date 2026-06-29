@@ -5,3 +5,5 @@ pub mod device;
 pub mod device_capabilities;
 pub mod frame;
 pub mod report;
+
+pub use device::Device;
