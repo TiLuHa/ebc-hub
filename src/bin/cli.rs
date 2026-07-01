@@ -4,7 +4,6 @@ use ebc_hub::config::Config;
 use ebc_hub::db_access::Storage;
 use ebc_hub::db_access::models::{BatteryIntake, Test, TestConfig};
 use ebc_hub::ebc;
-use ebc_hub::ebc::frame::OutboundFrame;
 use ebc_hub::ebc_runner::{self, EbcRunner};
 
 use color_eyre::eyre::{Result, eyre};
@@ -121,8 +120,7 @@ async fn main() -> Result<()> {
                 };
 
                 let result = (|| -> Result<()> {
-                    let mut ebc = ebc::Device::new(&config.port)?;
-                    ebc.send(OutboundFrame::connect())?;
+                    let ebc = ebc::Device::new(&config.port)?;
                     let ebc_runner = EbcRunner::new(ebc)?;
                     let ebc_runner_cmd_tx = ebc_runner.cmd_tx();
 

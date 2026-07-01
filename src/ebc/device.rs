@@ -24,10 +24,14 @@ impl Device {
             .timeout(Duration::from_millis(10))
             .open()?;
 
-        Ok(Self {
+        let mut ebc = Self {
             port,
             buffer: Vec::new(),
-        })
+        };
+
+        ebc.send(OutboundFrame::connect())?;
+
+        Ok(ebc)
     }
 
     pub fn send_raw(&mut self, data: &[u8]) -> Result<()> {
