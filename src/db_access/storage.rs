@@ -50,6 +50,30 @@ impl Storage {
         Ok(rows)
     }
 
+    pub async fn get_battery_type(&self, battery_type_id: &str) -> Result<Option<BatteryType>> {
+        let result = sqlx::query_as!(
+            BatteryType,
+            r#"
+            SELECT
+                id,
+                manufacturer,
+                model,
+                chemistry,
+                nominal_voltage_mv,
+                nominal_capacity_mah,
+                charge_termination_voltage_mv,
+                discharge_cutoff_voltage_mv,
+                notes
+            FROM battery_types
+            WHERE id = ?
+            "#,
+            battery_type_id
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+        Ok(result)
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub async fn create_battery_type(
         &self,

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ battery_type.manufacturer }} {{ battery_type.model }} – EBC Hub
+{% endblock %}
+
+{% block content %}
+<section class="page-header page-header-with-action">
+    <div>
+        <p class="breadcrumb">
+            <a href="/battery-types">
+                ← Zurück zu den Batterietypen
+            </a>
+        </p>
+
+        <h1>
+            {{ battery_type.manufacturer }}
+            {{ battery_type.model }}
+        </h1>
+
+        <p>
+            Details zum Batterietyp mit der ID {{ battery_type.id }}.
+        </p>
+    </div>
+
+    <div class="page-actions">
+        <a
+            class="button button-secondary"
+            href="/battery-types/{{ battery_type.id }}/edit"
+        >
+            Bearbeiten
+        </a>
+    </div>
+</section>
+
+<section class="card">
+    <dl class="detail-list">
+        <div>
+            <dt>ID</dt>
+            <dd>{{ battery_type.id }}</dd>
+        </div>
+
+        <div>
+            <dt>Hersteller</dt>
+            <dd>{{ battery_type.manufacturer }}</dd>
+        </div>
+
+        <div>
+            <dt>Modell</dt>
+            <dd>{{ battery_type.model }}</dd>
+        </div>
+
+        <div>
+            <dt>Chemie</dt>
+            <dd>{{ battery_type.chemistry }}</dd>
+        </div>
+
+        <div>
+            <dt>Nennspannung</dt>
+            <dd>
+                {{ battery_type.nominal_voltage_mv }} mV
+            </dd>
+        </div>
+
+        <div>
+            <dt>Nennkapazität</dt>
+            <dd>
+                {{ battery_type.nominal_capacity_mah }} mAh
+            </dd>
+        </div>
+
+        <div>
+            <dt>Ladeschlussspannung</dt>
+            <dd>
+                {{ battery_type.charge_termination_voltage_mv }} mV
+            </dd>
+        </div>
+
+        <div>
+            <dt>Entladeschlussspannung</dt>
+            <dd>
+                {{ battery_type.discharge_cutoff_voltage_mv }} mV
+            </dd>
+        </div>
+
+        <div>
+            <dt>Anmerkungen</dt>
+            <dd>
+                {% match battery_type.notes %}
+                    {% when Some with (notes) %}
+                        {{ notes }}
+                    {% when None %}
+                        –
+                {% endmatch %}
+            </dd>
+        </div>
+    </dl>
+</section>
+{% endblock %}

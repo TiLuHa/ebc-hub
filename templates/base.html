@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>{% block title %}EBC Hub{% endblock %}</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/style.css"
+    >
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-content">
+            <a class="site-title" href="/">EBC Hub</a>
+
+            <nav aria-label="Hauptnavigation">
+                <a href="/battery-types">Batterietypen</a>
+                <a href="/batteries">Batterien</a>
+                <a href="/tests">Tests</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".clickable-row").forEach(row => {
+            row.addEventListener("click", () => {
+                window.location.href = row.dataset.href;
+            });
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".clickable-item").forEach(element => {
+            const openTarget = () => {
+                window.location.href = element.dataset.href;
+            };
+
+            element.addEventListener("click", openTarget);
+
+            element.addEventListener("keydown", event => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openTarget();
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>

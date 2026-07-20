@@ -48,11 +48,14 @@ impl TestRunner {
     }
 
     async fn handle_start_test(&mut self, test_id: i64) -> Result<()> {
-        match &self.state{
-            State::Idle | State::Finished => {},
+        match &self.state {
+            State::Idle | State::Finished => {}
             _ => {
-                return Err(color_eyre::eyre::eyre!("Couldn't resume test, since state is wrong: {:?}", self.state));
-            },
+                return Err(color_eyre::eyre::eyre!(
+                    "Couldn't resume test, since state is wrong: {:?}",
+                    self.state
+                ));
+            }
         };
 
         let test = self
@@ -108,17 +111,20 @@ impl TestRunner {
             }
         }
 
-        self.state = State::Running{test, session_id};
+        self.state = State::Running { test, session_id };
 
         Ok(())
     }
 
     async fn handle_resume_test(&mut self) -> Result<()> {
-        let (test, session_id) = match &self.state{
+        let (test, session_id) = match &self.state {
             State::Stopped { test, session_id } => (test, session_id),
             _ => {
-                return Err(color_eyre::eyre::eyre!("Couldn't resume test, since state is wrong: {:?}", self.state));
-            },
+                return Err(color_eyre::eyre::eyre!(
+                    "Couldn't resume test, since state is wrong: {:?}",
+                    self.state
+                ));
+            }
         };
 
         match test.config {
@@ -163,19 +169,28 @@ impl TestRunner {
             }
         }
 
-        self.state = State::Running{test: test.clone(), session_id: *session_id};
+        self.state = State::Running {
+            test: test.clone(),
+            session_id: *session_id,
+        };
 
         Ok(())
     }
 
     async fn handle_stop_test(&mut self) -> Result<()> {
-        let (test, session_id) = match &self.state{
+        let (test, session_id) = match &self.state {
             State::Running { test, session_id } => (test, session_id),
             _ => {
-                return Err(color_eyre::eyre::eyre!("Couldn't resume test, since state is wrong: {:?}", self.state));
-            },
+                return Err(color_eyre::eyre::eyre!(
+                    "Couldn't resume test, since state is wrong: {:?}",
+                    self.state
+                ));
+            }
         };
-        self.state = State::Stopped { test: test.clone(), session_id: *session_id };
+        self.state = State::Stopped {
+            test: test.clone(),
+            session_id: *session_id,
+        };
         Ok(())
     }
 
@@ -186,11 +201,11 @@ impl TestRunner {
             }
             Command::StopTest { callback } => {
                 callback.send(self.handle_stop_test().await).ok();
-            },
+            }
             Command::ResumeTest { callback } => {
                 callback.send(self.handle_resume_test().await).ok();
-            },
-            Command::Status { callback } => {},
+            }
+            Command::Status { callback } => {}
         }
     }
 

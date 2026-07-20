@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>{{ title }}</h1>
+
+    <p>
+        Batterien erfassen, Eingangsdaten dokumentieren und
+        Batterietests vorbereiten.
+    </p>
+</section>
+
+<section class="card-grid">
+    <article class="card">
+        <h2>Batterietypen</h2>
+
+        <p>
+            Hersteller, Modell, Zellchemie und elektrische Grenzwerte
+            verwalten.
+        </p>
+
+        <a class="button" href="/battery-types">
+            Batterietypen öffnen
+        </a>
+    </article>
+
+    <article class="card">
+        <h2>Batterien</h2>
+
+        <p>
+            Einzelne Batterien und ihre Eingangskontrolle erfassen.
+        </p>
+
+        <a class="button" href="/batteries">
+            Batterien öffnen
+        </a>
+    </article>
+
+    <article class="card">
+        <h2>Tests</h2>
+
+        <p>
+            Lade- und Entladetests vorbereiten und zur Durchführung
+            freigeben.
+        </p>
+
+        <a class="button" href="/tests">
+            Tests öffnen
+        </a>
+    </article>
+</section>
+{% endblock %}

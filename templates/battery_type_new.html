@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} – EBC Hub{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>{{ title }}</h1>
+
+    <p>
+        Einen neuen Batterietyp mit seinen grundlegenden technischen
+        Daten anlegen.
+    </p>
+</section>
+
+{% match error %}
+    {% when Some with (message) %}
+        <div class="error-message" role="alert">
+            {{ message }}
+        </div>
+    {% when None %}
+{% endmatch %}
+
+<section class="card">
+    <form method="post" action="/battery-types">
+        <label>
+            Hersteller
+
+            <input
+                type="text"
+                name="manufacturer"
+                required
+                autocomplete="organization"
+            >
+        </label>
+
+        <label>
+            Modell
+
+            <input
+                type="text"
+                name="model"
+                required
+            >
+        </label>
+
+        <label>
+            Zellchemie
+
+            <select name="chemistry" required>
+                <option value="">Bitte auswählen</option>
+                <option value="LiFePO4">LiFePO₄</option>
+                <option value="NMC">NMC</option>
+                <option value="LTO">LTO</option>
+                <option value="NiMH">NiMH</option>
+                <option value="LeadAcid">Bleiakku</option>
+                <option value="Other">Sonstige</option>
+            </select>
+        </label>
+
+        <label>
+            Nennspannung in mV
+
+            <input
+                type="number"
+                name="nominal_voltage_mv"
+                min="1"
+                step="1"
+                required
+                placeholder="z. B. 3200"
+            >
+        </label>
+
+        <label>
+            Nennkapazität in mAh
+
+            <input
+                type="number"
+                name="nominal_capacity_mah"
+                min="1"
+                step="1"
+                required
+                placeholder="z. B. 314000"
+            >
+        </label>
+        <label>
+            Ladeschlussspannung (mV)
+
+            <input
+                type="number"
+                name="charge_termination_voltage_mv"
+                required
+            >
+        </label>
+
+        <label>
+            Entladeschlussspannung (mV)
+
+            <input
+                type="number"
+                name="discharge_cutoff_voltage_mv"
+                required
+            >
+        </label>
+        <div class="form-actions">
+            <button type="submit">
+                Batterietyp speichern
+            </button>
+
+            <a href="/battery-types">
+                Abbrechen
+            </a>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -35,7 +35,5 @@ async fn main() -> Result<()> {
     let test_cmd_tx = test_runner.cmd_tx();
     let test_runner_thread = tokio::task::spawn(test_runner.run());
 
-
-
     Ok(())
 }
