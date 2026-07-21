@@ -4,7 +4,7 @@ use color_eyre::eyre::{Context, Result};
 use tokio::{net::TcpListener, signal};
 use tracing_subscriber::EnvFilter;
 
-use ebc_hub::{
+use open_battery_forge::{
     db_access::Storage,
     web::{self, AppState},
 };
@@ -16,16 +16,16 @@ async fn main() -> Result<()> {
     dotenvy::dotenv()?;
 
     let database_url =
-        std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://ebc-hub.db".to_owned());
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://open-battery-forge.db".to_owned());
 
     let listen_address =
-        std::env::var("EBC_HUB_LISTEN").unwrap_or_else(|_| "0.0.0.0:3000".to_owned());
+        std::env::var("OPEN_BATTERY_FORGE_LISTEN").unwrap_or_else(|_| "0.0.0.0:3000".to_owned());
 
     tracing::info!(database_url, "opening database");
 
     let storage = Storage::connect(&database_url)
         .await
-        .wrap_err("failed to open EBC Hub storage")?;
+        .wrap_err("failed to open database")?;
 
     let state = AppState {
         storage: Arc::new(storage),
@@ -39,22 +39,22 @@ async fn main() -> Result<()> {
 
     tracing::info!(
         address = %listen_address,
-        "EBC Hub web server started"
+        "Open battery forge web server started"
     );
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await
-        .wrap_err("EBC Hub HTTP server failed")?;
+        .wrap_err("Open battery forge HTTP server failed")?;
 
-    tracing::info!("EBC Hub stopped");
+    tracing::info!("Open battery forge stopped");
 
     Ok(())
 }
 
 fn init_tracing() {
     let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("ebc_hub=debug,tower_http=info"));
+        .unwrap_or_else(|_| EnvFilter::new("open_battery_forge=debug,tower_http=info"));
 
     tracing_subscriber::fmt()
         .with_env_filter(filter)

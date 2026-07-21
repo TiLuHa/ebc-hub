@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                INSERT INTO discharge_cp_tests (\n                    test_id,\n                    target_power_w,\n                    cutoff_voltage_mv,\n                    cutoff_time_min\n                )\n                VALUES (?, ?, ?, ?)\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "814ad19833f65b3bb2f62da1db72ffa355ccce544067f469be7ce0163106806b"
+}

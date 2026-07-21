@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT\n                    target_power_w as \"target_power_w!\",\n                    cutoff_voltage_mv as \"cutoff_voltage_mv!\",\n                    cutoff_time_min as \"cutoff_time_min!\"\n                FROM discharge_cp_tests\n                WHERE test_id = ?\n                ",
+  "describe": {
+    "columns": [
+      {
+        "name": "target_power_w!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "discharge_cp_tests",
+            "name": "target_power_w"
+          }
+        }
+      },
+      {
+        "name": "cutoff_voltage_mv!",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "discharge_cp_tests",
+            "name": "cutoff_voltage_mv"
+          }
+        }
+      },
+      {
+        "name": "cutoff_time_min!",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "discharge_cp_tests",
+            "name": "cutoff_time_min"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c002b0fd63794aa9264e2e0d6e041b73568603f0c4c63feb610ce6154285e1a7"
+}

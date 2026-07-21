@@ -94,7 +94,7 @@ impl IntoResponse for AppError {
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <title>{heading} – EBC Hub</title>
+                    <title>{heading} – Open battery forge</title>
                 </head>
                 <body>
                     <main>

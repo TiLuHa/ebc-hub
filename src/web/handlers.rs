@@ -11,7 +11,7 @@ use super::{
 };
 
 pub async fn index(State(_state): State<AppState>) -> Result<Html<String>, AppError> {
-    render(IndexTemplate { title: "EBC Hub" })
+    render(IndexTemplate { title: "Open battery forge" })
 }
 
 pub async fn battery_types(State(state): State<AppState>) -> Result<Html<String>, AppError> {

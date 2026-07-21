@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                INSERT INTO charge_cv_tests (\n                    test_id,\n                    target_current_ma,\n                    charge_voltage_mv,\n                    charge_cutoff_current_ma\n                )\n                VALUES (?, ?, ?, ?)\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "3df49277d225b07d1325ab7d9accf6f17f9310b149b780c4e4c9e30184662ff8"
+}

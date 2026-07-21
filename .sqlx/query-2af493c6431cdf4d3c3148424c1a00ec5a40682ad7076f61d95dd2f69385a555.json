@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT\n                    target_current_ma as \"target_current_ma!\",\n                    charge_voltage_mv as \"charge_voltage_mv!\",\n                    charge_cutoff_current_ma as \"charge_cutoff_current_ma!\"\n                FROM charge_cv_tests\n                WHERE test_id = ?\n                ",
+  "describe": {
+    "columns": [
+      {
+        "name": "target_current_ma!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "charge_cv_tests",
+            "name": "target_current_ma"
+          }
+        }
+      },
+      {
+        "name": "charge_voltage_mv!",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "charge_cv_tests",
+            "name": "charge_voltage_mv"
+          }
+        }
+      },
+      {
+        "name": "charge_cutoff_current_ma!",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "charge_cv_tests",
+            "name": "charge_cutoff_current_ma"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "2af493c6431cdf4d3c3148424c1a00ec5a40682ad7076f61d95dd2f69385a555"
+}

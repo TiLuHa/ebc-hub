@@ -1,0 +1,122 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                id,\n                manufacturer,\n                model,\n                chemistry,\n                nominal_voltage_mv,\n                nominal_capacity_mah,\n                charge_termination_voltage_mv,\n                discharge_cutoff_voltage_mv,\n                notes\n            FROM battery_types\n            WHERE id = ?\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "battery_types",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "manufacturer",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "battery_types",
+            "name": "manufacturer"
+          }
+        }
+      },
+      {
+        "name": "model",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "battery_types",
+            "name": "model"
+          }
+        }
+      },
+      {
+        "name": "chemistry",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "battery_types",
+            "name": "chemistry"
+          }
+        }
+      },
+      {
+        "name": "nominal_voltage_mv",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "battery_types",
+            "name": "nominal_voltage_mv"
+          }
+        }
+      },
+      {
+        "name": "nominal_capacity_mah",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "battery_types",
+            "name": "nominal_capacity_mah"
+          }
+        }
+      },
+      {
+        "name": "charge_termination_voltage_mv",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "battery_types",
+            "name": "charge_termination_voltage_mv"
+          }
+        }
+      },
+      {
+        "name": "discharge_cutoff_voltage_mv",
+        "ordinal": 7,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "battery_types",
+            "name": "discharge_cutoff_voltage_mv"
+          }
+        }
+      },
+      {
+        "name": "notes",
+        "ordinal": 8,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "battery_types",
+            "name": "notes"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "d0ffd4e15da95581049b8a4c7abf68384f662044af04c9f9ee2b907b527f6ce0"
+}
