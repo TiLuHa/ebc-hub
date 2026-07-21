@@ -112,6 +112,47 @@ impl Storage {
         Ok(result.last_insert_rowid())
     }
 
+    pub async fn update_battery_type(
+        &self,
+        battery_type: &BatteryType,
+    ) -> color_eyre::Result<()> {
+        let result = sqlx::query(
+            r#"
+            UPDATE battery_types
+            SET
+                manufacturer = ?,
+                model = ?,
+                chemistry = ?,
+                nominal_voltage_mv = ?,
+                nominal_capacity_mah = ?,
+                charge_termination_voltage_mv = ?,
+                discharge_cutoff_voltage_mv = ?,
+                notes = ?
+            WHERE id = ?
+            "#,
+        )
+        .bind(&battery_type.manufacturer)
+        .bind(&battery_type.model)
+        .bind(&battery_type.chemistry)
+        .bind(battery_type.nominal_voltage_mv)
+        .bind(battery_type.nominal_capacity_mah)
+        .bind(battery_type.charge_termination_voltage_mv)
+        .bind(battery_type.discharge_cutoff_voltage_mv)
+        .bind(&battery_type.notes)
+        .bind(battery_type.id)
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() == 0 {
+            color_eyre::eyre::bail!(
+                "Battery type with ID {} does not exist",
+                battery_type.id
+            );
+        }
+
+        Ok(())
+    }
+
     pub async fn list_batteries(&self) -> Result<Vec<Battery>> {
         let result = sqlx::query_as!(
             Battery,

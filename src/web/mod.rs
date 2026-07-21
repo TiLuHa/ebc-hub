@@ -25,7 +25,7 @@ pub fn router(state: AppState) -> Router {
         .route("/battery-types/new", get(handlers::new_battery_type))
         .route(
             "/battery-types/{battery_type_id}",
-            get(handlers::battery_type_detail),
+            get(handlers::battery_type_detail).post(handlers::update_battery_type),
         )
         .nest_service("/static", ServeDir::new("static"))
         .layer(TraceLayer::new_for_http())

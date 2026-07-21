@@ -8,9 +8,7 @@
 <section class="page-header page-header-with-action">
     <div>
         <p class="breadcrumb">
-            <a href="/battery-types">
-                ← Zurück zu den Batterietypen
-            </a>
+            <a href="/battery-types">← Zurück zu den Batterietypen</a>
         </p>
 
         <h1>
@@ -19,81 +17,159 @@
         </h1>
 
         <p>
-            Details zum Batterietyp mit der ID {{ battery_type.id }}.
+            Batterietyp #{{ battery_type.id }} anzeigen und bearbeiten.
         </p>
     </div>
 
-    <div class="page-actions">
-        <a
-            class="button button-secondary"
-            href="/battery-types/{{ battery_type.id }}/edit"
-        >
-            Bearbeiten
+    <span class="battery-type-chemistry">
+        {{ battery_type.chemistry }}
+    </span>
+</section>
+
+<form
+    method="post"
+    action="/battery-types/{{ battery_type.id }}"
+    class="battery-type-edit-form"
+>
+    <section class="card edit-card">
+        <header class="edit-card-header">
+            <div>
+                <h2>Allgemeine Angaben</h2>
+                <p>Hersteller, Modell und Zellchemie.</p>
+            </div>
+        </header>
+
+        <div class="form-grid">
+            <label>
+                <span>Hersteller</span>
+                <input
+                    type="text"
+                    name="manufacturer"
+                    value="{{ battery_type.manufacturer }}"
+                    required
+                >
+            </label>
+
+            <label>
+                <span>Modell</span>
+                <input
+                    type="text"
+                    name="model"
+                    value="{{ battery_type.model }}"
+                    required
+                >
+            </label>
+
+            <label>
+                <span>Chemie</span>
+                <input
+                    type="text"
+                    name="chemistry"
+                    value="{{ battery_type.chemistry }}"
+                    required
+                >
+            </label>
+        </div>
+    </section>
+
+    <section class="card edit-card">
+        <header class="edit-card-header">
+            <div>
+                <h2>Elektrische Kenndaten</h2>
+                <p>Alle Spannungswerte werden in Millivolt gespeichert.</p>
+            </div>
+        </header>
+
+        <div class="form-grid">
+            <label>
+                <span>Nennspannung</span>
+
+                <div class="input-with-unit">
+                    <input
+                        type="number"
+                        name="nominal_voltage_mv"
+                        value="{{ battery_type.nominal_voltage_mv }}"
+                        min="0"
+                        required
+                    >
+                    <span>mV</span>
+                </div>
+            </label>
+
+            <label>
+                <span>Nennkapazität</span>
+
+                <div class="input-with-unit">
+                    <input
+                        type="number"
+                        name="nominal_capacity_mah"
+                        value="{{ battery_type.nominal_capacity_mah }}"
+                        min="0"
+                        required
+                    >
+                    <span>mAh</span>
+                </div>
+            </label>
+
+            <label>
+                <span>Ladeschlussspannung</span>
+
+                <div class="input-with-unit">
+                    <input
+                        type="number"
+                        name="charge_termination_voltage_mv"
+                        value="{{ battery_type.charge_termination_voltage_mv }}"
+                        min="0"
+                        required
+                    >
+                    <span>mV</span>
+                </div>
+            </label>
+
+            <label>
+                <span>Entladeschlussspannung</span>
+
+                <div class="input-with-unit">
+                    <input
+                        type="number"
+                        name="discharge_cutoff_voltage_mv"
+                        value="{{ battery_type.discharge_cutoff_voltage_mv }}"
+                        min="0"
+                        required
+                    >
+                    <span>mV</span>
+                </div>
+            </label>
+        </div>
+    </section>
+
+    <section class="card edit-card">
+        <header class="edit-card-header">
+            <div>
+                <h2>Anmerkungen</h2>
+                <p>Optionale Informationen zu diesem Batterietyp.</p>
+            </div>
+        </header>
+
+        <label>
+            <span class="visually-hidden">Anmerkungen</span>
+
+            <textarea
+                name="notes"
+                rows="5"
+                placeholder="Optionale Hinweise zum Batterietyp"
+            >{% match battery_type.notes %}{% when Some with (notes) %}{{ notes }}{% when None %}{% endmatch %}</textarea>
+        </label>
+    </section>
+
+    <section class="form-actions">
+        <a class="button button-secondary" href="/battery-types">
+            Abbrechen
         </a>
-    </div>
-</section>
 
-<section class="card">
-    <dl class="detail-list">
-        <div>
-            <dt>ID</dt>
-            <dd>{{ battery_type.id }}</dd>
-        </div>
-
-        <div>
-            <dt>Hersteller</dt>
-            <dd>{{ battery_type.manufacturer }}</dd>
-        </div>
-
-        <div>
-            <dt>Modell</dt>
-            <dd>{{ battery_type.model }}</dd>
-        </div>
-
-        <div>
-            <dt>Chemie</dt>
-            <dd>{{ battery_type.chemistry }}</dd>
-        </div>
-
-        <div>
-            <dt>Nennspannung</dt>
-            <dd>
-                {{ battery_type.nominal_voltage_mv }} mV
-            </dd>
-        </div>
-
-        <div>
-            <dt>Nennkapazität</dt>
-            <dd>
-                {{ battery_type.nominal_capacity_mah }} mAh
-            </dd>
-        </div>
-
-        <div>
-            <dt>Ladeschlussspannung</dt>
-            <dd>
-                {{ battery_type.charge_termination_voltage_mv }} mV
-            </dd>
-        </div>
-
-        <div>
-            <dt>Entladeschlussspannung</dt>
-            <dd>
-                {{ battery_type.discharge_cutoff_voltage_mv }} mV
-            </dd>
-        </div>
-
-        <div>
-            <dt>Anmerkungen</dt>
-            <dd>
-                {% match battery_type.notes %}
-                    {% when Some with (notes) %}
-                        {{ notes }}
-                    {% when None %}
-                        –
-                {% endmatch %}
-            </dd>
-        </div>
-    </dl>
-</section>
+        <button class="button" type="submit">
+            Änderungen speichern
+        </button>
+    </section>
+</form>
 {% endblock %}
