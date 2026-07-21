@@ -1,0 +1,507 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ battery.battery_id }} – EBC Hub
+{% endblock %}
+
+{% block content %}
+<section class="page-header battery-detail-header">
+    <div>
+        <p class="breadcrumb">
+            <a href="/batteries">
+                ← Zurück zu den Batterien
+            </a>
+        </p>
+
+        <p class="eyebrow">
+            Batterie
+        </p>
+
+        <h1>
+            {{ battery.battery_id }}
+        </h1>
+
+        <p>
+            {{ battery_type.manufacturer }}
+            {{ battery_type.model }}
+            · {{ battery_type.chemistry }}
+        </p>
+    </div>
+
+    {% match intake %}
+        {% when Some with (_) %}
+            <span class="status-badge status-success">
+                Wareneingang erfasst
+            </span>
+        {% when None %}
+            <span class="status-badge status-pending">
+                Noch nicht eingegangen
+            </span>
+    {% endmatch %}
+</section>
+
+<div class="detail-layout">
+    <main class="detail-main">
+        <section class="card edit-card">
+            <header class="edit-card-header">
+                <div>
+                    <h2>Allgemeine Angaben</h2>
+
+                    <p>
+                        Zuordnung und Planungsinformationen der Batterie.
+                    </p>
+                </div>
+            </header>
+
+            <form
+                method="post"
+                action="/batteries/{{ battery.battery_id }}"
+                class="battery-edit-form"
+            >
+                <div class="form-grid">
+                    <label>
+                        <span>Batterie-ID</span>
+
+                        <input
+                            type="text"
+                            value="{{ battery.battery_id }}"
+                            disabled
+                        >
+
+                        <small>
+                            Die ID ist der Primärschlüssel und kann nicht geändert werden.
+                        </small>
+                    </label>
+
+                    <label>
+                        <span>Batterietyp</span>
+
+                        <select
+                            name="battery_type_id"
+                            required
+                        >
+                            {% for item in battery_types %}
+                                <option
+                                    value="{{ item.id }}"
+                                    {% if item.id == battery.battery_type_id %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ item.manufacturer }}
+                                    {{ item.model }}
+                                    – {{ item.chemistry }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+
+                <label class="full-width-field">
+                    <span>Notizen</span>
+
+                    <textarea
+                        name="notes"
+                        rows="4"
+                        placeholder="Optionale Planungsinformationen"
+                    >{% match battery.notes %}{% when Some with (notes) %}{{ notes }}{% when None %}{% endmatch %}</textarea>
+                </label>
+
+                <div class="inline-form-actions">
+                    <button
+                        class="button"
+                        type="submit"
+                    >
+                        Allgemeine Angaben speichern
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card intake-card">
+            <header class="edit-card-header intake-card-header">
+                <div>
+                    <h2>Wareneingang</h2>
+
+                    <p>
+                        Lieferung, Kennzeichnung und Eingangskontrolle.
+                    </p>
+                </div>
+
+                {% match intake %}
+                    {% when Some with (_) %}
+                        <span class="status-badge status-success">
+                            Erfasst
+                        </span>
+                    {% when None %}
+                        <span class="status-badge status-pending">
+                            Ausstehend
+                        </span>
+                {% endmatch %}
+            </header>
+
+            {% match intake %}
+                {% when Some with (intake) %}
+                    <dl class="intake-summary">
+                        <div>
+                            <dt>Seriennummer</dt>
+
+                            <dd>
+                                {% match intake.serial_number %}
+                                    {% when Some with (value) %}
+                                        {{ value }}
+                                    {% when None %}
+                                        –
+                                {% endmatch %}
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Kaufdatum</dt>
+
+                            <dd>
+                                {% match intake.purchase_date %}
+                                    {% when Some with (value) %}
+                                        {{ value }}
+                                    {% when None %}
+                                        –
+                                {% endmatch %}
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Lieferdatum</dt>
+
+                            <dd>
+                                {% match intake.delivery_date %}
+                                    {% when Some with (value) %}
+                                        {{ value }}
+                                    {% when None %}
+                                        –
+                                {% endmatch %}
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Spannung bei Lieferung</dt>
+
+                            <dd>
+                                {% match intake.voltage_at_delivery_mv %}
+                                    {% when Some with (value) %}
+                                        {{ value }} mV
+                                    {% when None %}
+                                        –
+                                {% endmatch %}
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Innenwiderstand</dt>
+
+                            <dd>
+                                {% match intake.internal_resistance_at_delivery_uohm %}
+                                    {% when Some with (value) %}
+                                        {{ value }} µΩ
+                                    {% when None %}
+                                        –
+                                {% endmatch %}
+                            </dd>
+                        </div>
+                    </dl>
+
+                    <div class="intake-text-section">
+                        <h3>Sichtprüfung</h3>
+
+                        <p>
+                            {% match intake.visual_inspection %}
+                                {% when Some with (value) %}
+                                    {{ value }}
+                                {% when None %}
+                                    Keine Angaben
+                            {% endmatch %}
+                        </p>
+                    </div>
+
+                    <div class="intake-text-section">
+                        <h3>Notizen zum Wareneingang</h3>
+
+                        <p>
+                            {% match intake.notes %}
+                                {% when Some with (value) %}
+                                    {{ value }}
+                                {% when None %}
+                                    Keine Angaben
+                            {% endmatch %}
+                        </p>
+                    </div>
+
+                    <details class="inline-editor">
+                        <summary>
+                            Wareneingang bearbeiten
+                        </summary>
+
+                        <form
+                            method="post"
+                            action="/batteries/{{ battery.battery_id }}/intake"
+                            class="battery-intake-form"
+                        >
+                            <div class="form-grid">
+                                <label>
+                                    <span>Seriennummer</span>
+
+                                    <input
+                                        type="text"
+                                        name="serial_number"
+                                        value="{% match intake.serial_number %}{% when Some with (value) %}{{ value }}{% when None %}{% endmatch %}"
+                                    >
+                                </label>
+
+                                <label>
+                                    <span>Kaufdatum</span>
+
+                                    <input
+                                        type="date"
+                                        name="purchase_date"
+                                        value="{% match intake.purchase_date %}{% when Some with (value) %}{{ value }}{% when None %}{% endmatch %}"
+                                    >
+                                </label>
+
+                                <label>
+                                    <span>Lieferdatum</span>
+
+                                    <input
+                                        type="date"
+                                        name="delivery_date"
+                                        value="{% match intake.delivery_date %}{% when Some with (value) %}{{ value }}{% when None %}{% endmatch %}"
+                                    >
+                                </label>
+
+                                <label>
+                                    <span>Spannung bei Lieferung</span>
+
+                                    <div class="input-with-unit">
+                                        <input
+                                            type="number"
+                                            name="voltage_at_delivery_mv"
+                                            min="1"
+                                            value="{% match intake.voltage_at_delivery_mv %}{% when Some with (value) %}{{ value }}{% when None %}{% endmatch %}"
+                                        >
+
+                                        <span>mV</span>
+                                    </div>
+                                </label>
+
+                                <label>
+                                    <span>Innenwiderstand bei Lieferung</span>
+
+                                    <div class="input-with-unit">
+                                        <input
+                                            type="number"
+                                            name="internal_resistance_at_delivery_uohm"
+                                            min="0"
+                                            value="{% match intake.internal_resistance_at_delivery_uohm %}{% when Some with (value) %}{{ value }}{% when None %}{% endmatch %}"
+                                        >
+
+                                        <span>µΩ</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <label class="full-width-field">
+                                <span>Sichtprüfung</span>
+
+                                <textarea
+                                    name="visual_inspection"
+                                    rows="4"
+                                    placeholder="Zum Beispiel Beschädigungen, Verformungen oder unauffälliger Zustand"
+                                >{% match intake.visual_inspection %}{% when Some with (value) %}{{ value }}{% when None %}{% endmatch %}</textarea>
+                            </label>
+
+                            <label class="full-width-field">
+                                <span>Notizen</span>
+
+                                <textarea
+                                    name="notes"
+                                    rows="4"
+                                    placeholder="Weitere Hinweise zum Wareneingang"
+                                >{% match intake.notes %}{% when Some with (value) %}{{ value }}{% when None %}{% endmatch %}</textarea>
+                            </label>
+
+                            <div class="inline-form-actions">
+                                <button
+                                    class="button"
+                                    type="submit"
+                                >
+                                    Wareneingang speichern
+                                </button>
+                            </div>
+                        </form>
+                    </details>
+
+                {% when None %}
+                    <div class="empty-intake">
+                        <h3>Noch kein Wareneingang erfasst</h3>
+
+                        <p>
+                            Die Batterie ist bereits registriert. Die Angaben
+                            zur Lieferung können ergänzt werden, sobald sie
+                            eingetroffen ist.
+                        </p>
+                    </div>
+
+                    <details
+                        class="inline-editor"
+                        open
+                    >
+                        <summary>
+                            Wareneingang erfassen
+                        </summary>
+
+                        <form
+                            method="post"
+                            action="/batteries/{{ battery.battery_id }}/intake"
+                            class="battery-intake-form"
+                        >
+                            <div class="form-grid">
+                                <label>
+                                    <span>Seriennummer</span>
+
+                                    <input
+                                        type="text"
+                                        name="serial_number"
+                                    >
+                                </label>
+
+                                <label>
+                                    <span>Kaufdatum</span>
+
+                                    <input
+                                        type="date"
+                                        name="purchase_date"
+                                    >
+                                </label>
+
+                                <label>
+                                    <span>Lieferdatum</span>
+
+                                    <input
+                                        type="date"
+                                        name="delivery_date"
+                                    >
+                                </label>
+
+                                <label>
+                                    <span>Spannung bei Lieferung</span>
+
+                                    <div class="input-with-unit">
+                                        <input
+                                            type="number"
+                                            name="voltage_at_delivery_mv"
+                                            min="1"
+                                        >
+
+                                        <span>mV</span>
+                                    </div>
+                                </label>
+
+                                <label>
+                                    <span>Innenwiderstand bei Lieferung</span>
+
+                                    <div class="input-with-unit">
+                                        <input
+                                            type="number"
+                                            name="internal_resistance_at_delivery_uohm"
+                                            min="0"
+                                        >
+
+                                        <span>µΩ</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <label class="full-width-field">
+                                <span>Sichtprüfung</span>
+
+                                <textarea
+                                    name="visual_inspection"
+                                    rows="4"
+                                    placeholder="Zum Beispiel Beschädigungen, Verformungen oder unauffälliger Zustand"
+                                ></textarea>
+                            </label>
+
+                            <label class="full-width-field">
+                                <span>Notizen</span>
+
+                                <textarea
+                                    name="notes"
+                                    rows="4"
+                                    placeholder="Weitere Hinweise zum Wareneingang"
+                                ></textarea>
+                            </label>
+
+                            <div class="inline-form-actions">
+                                <button
+                                    class="button"
+                                    type="submit"
+                                >
+                                    Wareneingang speichern
+                                </button>
+                            </div>
+                        </form>
+                    </details>
+            {% endmatch %}
+        </section>
+    </main>
+
+    <aside class="detail-sidebar">
+        <section class="card">
+            <h2>Batterietyp</h2>
+
+            <dl class="sidebar-details">
+                <div>
+                    <dt>Hersteller</dt>
+                    <dd>{{ battery_type.manufacturer }}</dd>
+                </div>
+
+                <div>
+                    <dt>Modell</dt>
+                    <dd>{{ battery_type.model }}</dd>
+                </div>
+
+                <div>
+                    <dt>Chemie</dt>
+                    <dd>{{ battery_type.chemistry }}</dd>
+                </div>
+
+                <div>
+                    <dt>Nennspannung</dt>
+                    <dd>{{ battery_type.nominal_voltage_mv }} mV</dd>
+                </div>
+
+                <div>
+                    <dt>Nennkapazität</dt>
+                    <dd>{{ battery_type.nominal_capacity_mah }} mAh</dd>
+                </div>
+            </dl>
+
+            <a
+                class="text-link"
+                href="/battery-types/{{ battery_type.id }}"
+            >
+                Batterietyp öffnen →
+            </a>
+        </section>
+
+        <section class="card future-section">
+            <h2>Tests</h2>
+
+            <p>
+                Für diese Batterie wurden noch keine Tests angezeigt.
+            </p>
+
+            <span class="muted">
+                Die Testhistorie kann hier später ergänzt werden.
+            </span>
+        </section>
+    </aside>
+</div>
+{% endblock %}

@@ -1,10 +1,9 @@
 use askama::Template;
 use axum::{
-    extract::{Form, Path, State}, http::StatusCode, response::{Html, IntoResponse, Redirect, Response},
+    extract::{Form, Path, State}, response::{Html, Redirect},
 };
-use serde::Deserialize;
 
-use crate::{db_access::models::BatteryType, web::templates::BatteryTypeDetailTemplate};
+use crate::web::{AppError, forms::{BatteryIntakeForm, CreateBatteryForm, UpdateBatteryForm, battery::{BatteryTypeForm, CreateBatteryTypeForm}}, templates::{BatteriesTemplate, BatteryDetailTemplate, BatteryTypeDetailTemplate, NewBatteryTemplate}, validation::battery::{validate_battery_intake, validate_create_battery, validate_update_battery}};
 
 use super::{
     AppState,
@@ -25,48 +24,6 @@ pub async fn battery_types(State(state): State<AppState>) -> Result<Html<String>
         title: "Batterietypen",
         battery_types,
     })
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateBatteryTypeForm {
-    pub manufacturer: String,
-    pub model: String,
-    pub chemistry: String,
-    pub nominal_voltage_mv: i64,
-    pub nominal_capacity_mah: i64,
-    pub charge_termination_voltage_mv: i64,
-    pub discharge_cutoff_voltage_mv: i64,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct BatteryTypeForm {
-    pub manufacturer: String,
-    pub model: String,
-    pub chemistry: String,
-    pub nominal_voltage_mv: i64,
-    pub nominal_capacity_mah: i64,
-    pub charge_termination_voltage_mv: i64,
-    pub discharge_cutoff_voltage_mv: i64,
-    pub notes: Option<String>,
-}
-
-impl BatteryTypeForm {
-    pub fn into_battery_type(self, id: i64) -> BatteryType {
-        BatteryType {
-            id,
-            manufacturer: self.manufacturer.trim().to_owned(),
-            model: self.model.trim().to_owned(),
-            chemistry: self.chemistry.trim().to_owned(),
-            nominal_voltage_mv: self.nominal_voltage_mv,
-            nominal_capacity_mah: self.nominal_capacity_mah,
-            charge_termination_voltage_mv: self.charge_termination_voltage_mv,
-            discharge_cutoff_voltage_mv: self.discharge_cutoff_voltage_mv,
-            notes: self
-                .notes
-                .map(|notes| notes.trim().to_owned())
-                .filter(|notes| !notes.is_empty()),
-        }
-    }
 }
 
 pub async fn new_battery_type(State(_state): State<AppState>) -> Result<Html<String>, AppError> {
@@ -134,7 +91,7 @@ pub async fn battery_type_detail(
 ) -> Result<Html<String>, AppError> {
     let battery_type = state
         .storage
-        .get_battery_type(&battery_type_id.to_string())
+        .get_battery_type(battery_type_id)
         .await?
         .ok_or_else(|| AppError::not_found("Der Batterietyp wurde nicht gefunden."))?;
 
@@ -224,119 +181,144 @@ where
     Ok(Html(html))
 }
 
-#[derive(Debug)]
-pub struct AppError {
-    status: StatusCode,
-    message: String,
-    error: Option<color_eyre::Report>,
+pub async fn batteries(
+    State(state): State<AppState>,
+) -> Result<Html<String>, AppError> {
+    let batteries = state
+        .storage
+        .list_batteries()
+        .await?;
+
+    render(BatteriesTemplate {
+        batteries,
+    })
 }
 
-impl AppError {
-    pub fn internal(error: impl Into<color_eyre::Report>) -> Self {
-        Self {
-            status: StatusCode::INTERNAL_SERVER_ERROR,
-            message: "Die Anfrage konnte nicht verarbeitet werden.".to_owned(),
-            error: Some(error.into()),
-        }
-    }
+pub async fn new_battery(
+    State(state): State<AppState>,
+) -> Result<Html<String>, AppError> {
+    let battery_types = state
+        .storage
+        .list_battery_types()
+        .await?;
 
-    pub fn bad_request(message: impl Into<String>) -> Self {
-        Self {
-            status: StatusCode::BAD_REQUEST,
-            message: message.into(),
-            error: None,
-        }
-    }
-    pub fn not_found(message: impl Into<String>) -> Self {
-        Self {
-            status: StatusCode::NOT_FOUND,
-            message: message.into(),
-            error: None,
-        }
-    }
+    render(NewBatteryTemplate {
+        battery_types,
+    })
 }
 
-impl From<color_eyre::Report> for AppError {
-    fn from(error: color_eyre::Report) -> Self {
-        Self::internal(error)
-    }
+pub async fn create_battery(
+    State(state): State<AppState>,
+    Form(form): Form<CreateBatteryForm>,
+) -> Result<Redirect, AppError> {
+    validate_create_battery(&form)?;
+
+    let battery = form.into_battery();
+
+    state
+        .storage
+        .create_battery(&battery)
+        .await?;
+
+    Ok(Redirect::to(&format!(
+        "/batteries/{}",
+        battery.battery_id
+    )))
 }
 
-impl From<askama::Error> for AppError {
-    fn from(error: askama::Error) -> Self {
-        Self::internal(error)
-    }
+pub async fn battery_detail(
+    State(state): State<AppState>,
+    Path(battery_id): Path<String>,
+) -> Result<Html<String>, AppError> {
+    let battery = state
+        .storage
+        .get_battery(&battery_id)
+        .await?
+        .ok_or_else(|| {
+            AppError::not_found(format!(
+                "Die Batterie '{battery_id}' wurde nicht gefunden."
+            ))
+        })?;
+
+    let battery_type = state
+        .storage
+        .get_battery_type(battery.battery_type_id)
+        .await?
+        .ok_or_else(|| {
+            AppError::not_found(format!(
+                "Der Batterietyp {} wurde nicht gefunden.",
+                battery.battery_type_id
+            ))
+        })?;
+
+    let battery_types = state
+        .storage
+        .list_battery_types()
+        .await?;
+
+    let intake = state
+        .storage
+        .get_battery_intake(&battery_id)
+        .await?;
+
+    render(BatteryDetailTemplate {
+        battery,
+        battery_type,
+        battery_types,
+        intake,
+    })
 }
 
-impl From<sqlx::Error> for AppError {
-    fn from(error: sqlx::Error) -> Self {
-        Self::internal(error)
-    }
+pub async fn update_battery(
+    State(state): State<AppState>,
+    Path(battery_id): Path<String>,
+    Form(form): Form<UpdateBatteryForm>,
+) -> Result<Redirect, AppError> {
+    validate_update_battery(&form)?;
+
+    let battery = form.into_battery(
+        battery_id.clone(),
+    );
+
+    state
+        .storage
+        .update_battery(&battery)
+        .await?;
+
+    Ok(Redirect::to(&format!(
+        "/batteries/{battery_id}"
+    )))
 }
 
-impl IntoResponse for AppError {
-    fn into_response(self) -> Response {
-        if let Some(error) = &self.error {
-            tracing::error!(
-                error = ?error,
-                status = %self.status,
-                "HTTP request failed"
-            );
-        } else {
-            tracing::warn!(
-                status = %self.status,
-                message = %self.message,
-                "invalid HTTP request"
-            );
-        }
+pub async fn save_battery_intake(
+    State(state): State<AppState>,
+    Path(battery_id): Path<String>,
+    Form(form): Form<BatteryIntakeForm>,
+) -> Result<Redirect, AppError> {
+    validate_battery_intake(&form)?;
 
-        let heading = match self.status {
-            StatusCode::BAD_REQUEST => "Ungültige Eingabe",
-            StatusCode::NOT_FOUND => "Nicht gefunden",
-            _ => "Interner Fehler",
-        };
+    let battery_exists = state
+        .storage
+        .get_battery(&battery_id)
+        .await?
+        .is_some();
 
-        let (back_link, back_text) = match self.status {
-            StatusCode::BAD_REQUEST => (
-                "/battery-types/new",
-                "Zurück zum Formular",
-            ),
-            StatusCode::NOT_FOUND => (
-                "/battery-types",
-                "Zurück zu den Batterietypen",
-            ),
-            _ => (
-                "/",
-                "Zurück zur Startseite",
-            ),
-        };
-
-        let html = format!(
-            r#"
-            <!doctype html>
-            <html lang="de">
-                <head>
-                    <meta charset="utf-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <title>{heading} – EBC Hub</title>
-                </head>
-                <body>
-                    <main>
-                        <h1>{heading}</h1>
-                        <p>{message}</p>
-                        <p>
-                            <a href="{back_link}">{back_text}</a>
-                        </p>
-                    </main>
-                </body>
-            </html>
-            "#,
-            heading = heading,
-            message = self.message,
-            back_link = back_link,
-            back_text = back_text,
-        );
-
-        (self.status, Html(html)).into_response()
+    if !battery_exists {
+        return Err(AppError::not_found(format!(
+            "Die Batterie '{battery_id}' wurde nicht gefunden."
+        )));
     }
+
+    let intake = form.into_battery_intake(
+        battery_id.clone(),
+    );
+
+    state
+        .storage
+        .upsert_battery_intake(&intake)
+        .await?;
+
+    Ok(Redirect::to(&format!(
+        "/batteries/{battery_id}"
+    )))
 }

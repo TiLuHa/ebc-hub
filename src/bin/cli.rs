@@ -401,9 +401,9 @@ async fn main() -> Result<()> {
             ["battery", "add", battery_id, battery_type_id] => {
                 let battery_type_id = battery_type_id.parse::<i64>()?;
 
-                storage.create_battery(battery_id, battery_type_id).await?;
+                // storage.create_battery(battery_id, battery_type_id).await?;
 
-                println!("Created battery {battery_id}.");
+                println!("Nt Created battery {battery_id}.");
             }
 
             ["battery", "list"] => {

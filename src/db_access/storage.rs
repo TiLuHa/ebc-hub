@@ -1,9 +1,9 @@
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{Result, bail};
 use sqlx::{SqlitePool, sqlite::SqlitePoolOptions};
 
-use crate::db_access::models::{
+use crate::{db_access::models::{
     Battery, BatteryIntake, BatteryType, Sample, Test, TestConfig, TestMode, TestSession,
-};
+}, web::view_models::BatteryListItem};
 
 #[derive(Clone)]
 pub struct Storage {
@@ -50,7 +50,7 @@ impl Storage {
         Ok(rows)
     }
 
-    pub async fn get_battery_type(&self, battery_type_id: &str) -> Result<Option<BatteryType>> {
+    pub async fn get_battery_type(&self, battery_type_id: i64) -> Result<Option<BatteryType>> {
         let result = sqlx::query_as!(
             BatteryType,
             r#"
@@ -153,21 +153,39 @@ impl Storage {
         Ok(())
     }
 
-    pub async fn list_batteries(&self) -> Result<Vec<Battery>> {
-        let result = sqlx::query_as!(
-            Battery,
+    pub async fn list_batteries(
+        &self,
+    ) -> Result<Vec<BatteryListItem>> {
+        let batteries = sqlx::query_as::<_, BatteryListItem>(
             r#"
             SELECT
-                battery_id as "battery_id!",
-                battery_type_id as "battery_type_id!",
-                notes
-            FROM batteries
-            ORDER BY battery_id
-            "#
+                b.battery_id,
+                b.battery_type_id,
+
+                bt.manufacturer,
+                bt.model,
+                bt.chemistry,
+
+                b.notes AS battery_notes,
+
+                EXISTS (
+                    SELECT 1
+                    FROM battery_intake bi
+                    WHERE bi.battery_id = b.battery_id
+                ) AS has_intake
+
+            FROM batteries b
+
+            INNER JOIN battery_types bt
+                ON bt.id = b.battery_type_id
+
+            ORDER BY b.battery_id
+            "#,
         )
         .fetch_all(&self.pool)
         .await?;
-        Ok(result)
+
+        Ok(batteries)
     }
 
     pub async fn get_battery(&self, battery_id: &str) -> Result<Option<Battery>> {
@@ -188,21 +206,58 @@ impl Storage {
         Ok(result)
     }
 
-    pub async fn create_battery(&self, battery_id: &str, battery_type_id: i64) -> Result<i64> {
-        let result = sqlx::query!(
+    pub async fn create_battery(
+        &self,
+        battery: &Battery,
+    ) -> Result<()> {
+        sqlx::query(
             r#"
             INSERT INTO batteries (
                 battery_id,
-                battery_type_id
+                battery_type_id,
+                notes
             )
-            VALUES (?, ?)
+            VALUES (?, ?, ?)
             "#,
-            battery_id,
-            battery_type_id,
         )
+        .bind(&battery.battery_id)
+        .bind(battery.battery_type_id)
+        .bind(&battery.notes)
         .execute(&self.pool)
         .await?;
-        Ok(result.last_insert_rowid())
+
+        Ok(())
+    }
+
+    pub async fn update_battery(
+        &self,
+        battery: &Battery,
+    ) -> Result<()> {
+        let result = sqlx::query(
+            r#"
+            UPDATE batteries
+
+            SET
+                battery_type_id = ?,
+                notes = ?
+
+            WHERE battery_id = ?
+            "#,
+        )
+        .bind(battery.battery_type_id)
+        .bind(&battery.notes)
+        .bind(&battery.battery_id)
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() == 0 {
+            bail!(
+                "Battery '{}' does not exist",
+                battery.battery_id
+            );
+        }
+
+        Ok(())
     }
 
     pub async fn get_battery_intake(&self, battery_id: &str) -> Result<Option<BatteryIntake>> {

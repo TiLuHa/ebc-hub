@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Batterien – EBC Hub
+{% endblock %}
+
+{% block content %}
+<section class="page-header page-header-with-action">
+    <div>
+        <h1>Batterien</h1>
+
+        <p>
+            Registrierte und geplante Batterien verwalten.
+        </p>
+    </div>
+
+    <a
+        class="button"
+        href="/batteries/new"
+    >
+        Batterie anlegen
+    </a>
+</section>
+
+{% if batteries.is_empty() %}
+    <section class="empty-state">
+        <h2>Noch keine Batterien</h2>
+
+        <p>
+            Lege die erste Batterie an, um sie später einem
+            Wareneingang und Batterietests zuordnen zu können.
+        </p>
+
+        <a
+            class="button"
+            href="/batteries/new"
+        >
+            Erste Batterie anlegen
+        </a>
+    </section>
+{% else %}
+    <section class="battery-grid">
+        {% for battery in batteries %}
+            <article
+                class="card clickable-row battery-card"
+                data-href="/batteries/{{ battery.battery_id }}"
+                tabindex="0"
+            >
+                <header class="battery-card-header">
+                    <div>
+                        <p class="eyebrow">
+                            Batterie
+                        </p>
+
+                        <h2>
+                            {{ battery.battery_id }}
+                        </h2>
+                    </div>
+
+                    {% if battery.has_intake %}
+                        <span class="status-badge status-success">
+                            Eingegangen
+                        </span>
+                    {% else %}
+                        <span class="status-badge status-pending">
+                            Geplant
+                        </span>
+                    {% endif %}
+                </header>
+
+                <dl class="card-details">
+                    <div>
+                        <dt>Hersteller</dt>
+                        <dd>{{ battery.manufacturer }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Modell</dt>
+                        <dd>{{ battery.model }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Chemie</dt>
+                        <dd>{{ battery.chemistry }}</dd>
+                    </div>
+                </dl>
+
+                {% match battery.battery_notes %}
+                    {% when Some with (notes) %}
+                        <p class="card-notes">
+                            {{ notes }}
+                        </p>
+                    {% when None %}
+                {% endmatch %}
+
+                <footer class="card-footer">
+                    Details öffnen →
+                </footer>
+            </article>
+        {% endfor %}
+    </section>
+{% endif %}
+{% endblock %}

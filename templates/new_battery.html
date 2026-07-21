@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Batterie anlegen – EBC Hub
+{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <p class="breadcrumb">
+        <a href="/batteries">
+            ← Zurück zu den Batterien
+        </a>
+    </p>
+
+    <h1>Batterie anlegen</h1>
+
+    <p>
+        Die Batterie kann bereits vor ihrer Lieferung registriert werden.
+        Angaben zum Wareneingang werden später ergänzt.
+    </p>
+</section>
+
+<form
+    method="post"
+    action="/batteries"
+    class="battery-edit-form"
+>
+    <section class="card edit-card">
+        <header class="edit-card-header">
+            <div>
+                <h2>Grunddaten</h2>
+
+                <p>
+                    Interne Kennung und zugehöriger Batterietyp.
+                </p>
+            </div>
+        </header>
+
+        <div class="form-grid">
+            <label>
+                <span>Batterie-ID</span>
+
+                <input
+                    type="text"
+                    name="battery_id"
+                    placeholder="z. B. CELL-001"
+                    pattern="[A-Za-z0-9._-]+"
+                    maxlength="100"
+                    required
+                >
+
+                <small>
+                    Die ID kann nach dem Anlegen nicht mehr geändert werden.
+                </small>
+            </label>
+
+            <label>
+                <span>Batterietyp</span>
+
+                <select
+                    name="battery_type_id"
+                    required
+                >
+                    <option value="">
+                        Batterietyp auswählen
+                    </option>
+
+                    {% for battery_type in battery_types %}
+                        <option value="{{ battery_type.id }}">
+                            {{ battery_type.manufacturer }}
+                            {{ battery_type.model }}
+                            – {{ battery_type.chemistry }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+        </div>
+    </section>
+
+    <section class="card edit-card">
+        <header class="edit-card-header">
+            <div>
+                <h2>Notizen</h2>
+
+                <p>
+                    Optionale Planungs- oder Bestellinformationen.
+                </p>
+            </div>
+        </header>
+
+        <label>
+            <span class="visually-hidden">
+                Notizen
+            </span>
+
+            <textarea
+                name="notes"
+                rows="5"
+                placeholder="Zum Beispiel Bestellung, vorgesehene Verwendung oder Lieferant"
+            ></textarea>
+        </label>
+    </section>
+
+    <section class="form-actions">
+        <a
+            class="button button-secondary"
+            href="/batteries"
+        >
+            Abbrechen
+        </a>
+
+        <button
+            class="button"
+            type="submit"
+        >
+            Batterie anlegen
+        </button>
+    </section>
+</form>
+{% endblock %}

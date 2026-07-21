@@ -1,6 +1,6 @@
 use askama::Template;
 
-use crate::db_access::models::BatteryType;
+use crate::{db_access::models::{Battery, BatteryIntake, BatteryType}, web::view_models::BatteryListItem};
 
 #[derive(Debug, Template)]
 #[template(path = "index.html")]
@@ -27,4 +27,26 @@ pub struct NewBatteryTypeTemplate {
 pub struct BatteryTypeDetailTemplate {
     pub title: &'static str,
     pub battery_type: BatteryType,
+}
+
+
+#[derive(Debug, Template)]
+#[template(path = "batteries.html")]
+pub struct BatteriesTemplate {
+    pub batteries: Vec<BatteryListItem>,
+}
+
+#[derive(Debug, Template)]
+#[template(path = "new_battery.html")]
+pub struct NewBatteryTemplate {
+    pub battery_types: Vec<BatteryType>,
+}
+
+#[derive(Debug, Template)]
+#[template(path = "battery_detail.html")]
+pub struct BatteryDetailTemplate {
+    pub battery: Battery,
+    pub battery_type: BatteryType,
+    pub battery_types: Vec<BatteryType>,
+    pub intake: Option<BatteryIntake>,
 }
